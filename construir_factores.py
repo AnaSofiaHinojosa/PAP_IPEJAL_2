@@ -54,7 +54,7 @@ MESES_ROTACION = 3
 # Si se activa, el factor de la izquierda se reemplaza por su residuo contra
 # el de la derecha (lo que tiene de información PROPIA), conservando su media.
 # Ej.: ORTOGONALIZAR = {"LIQUIDEZ": "VOLATILIDAD"}
-ORTOGONALIZAR: dict[str, str] = {}
+ORTOGONALIZAR: dict[str, str] = {"LIQUIDEZ": "VOLATILIDAD"}
 UMBRAL_CORRELACION = 0.80   # avisa si dos factores pasan este nivel
 
 # (nombre, característica, extremo largo): "bajo" = largo en los valores bajos
