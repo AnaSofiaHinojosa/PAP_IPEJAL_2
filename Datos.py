@@ -18,7 +18,10 @@ class HoldingsUniverseBuilder:
     combinando fuentes históricas (.csv) y reportes de holdings institucionales (.xlsx).
     """
 
-    def __init__(self, historical_dir: str, excel_2026_path: str, top_n: int = 100):
+    def __init__(self, historical_dir: str, excel_2026_path: str, top_n: int | None = 100):
+        """top_n=None conserva TODAS las empresas del índice en cada año (lo
+        que necesita la selección anual: el top 100 se escoge entre todas
+        las empresas del índice de cada año)."""
         self.historical_dir = historical_dir
         self.excel_2026_path = excel_2026_path
         self.top_n = top_n
@@ -43,8 +46,11 @@ class HoldingsUniverseBuilder:
             df = df[['Company', 'Ticker', 'Weight']].copy()
             df['Weight'] = pd.to_numeric(df['Weight'], errors='coerce')
 
-            # Ordenar por ponderación y tomar las Top N empresas
-            df_top = df.sort_values(by='Weight', ascending=False).head(self.top_n).copy()
+            # Ordenar por ponderación y (si top_n) tomar las Top N empresas
+            df_top = df.dropna(subset=['Ticker']).sort_values(by='Weight', ascending=False)
+            if self.top_n:
+                df_top = df_top.head(self.top_n)
+            df_top = df_top.copy()
             df_top['Year'] = year
             dfs.append(df_top)
 
@@ -67,8 +73,11 @@ class HoldingsUniverseBuilder:
         df['Weight'] = pd.to_numeric(df['Weight'], errors='coerce')
         df = df.dropna(subset=['Ticker', 'Weight'])
 
-        # Ordenar por ponderación y tomar las Top N empresas
-        df_top = df.sort_values(by='Weight', ascending=False).head(self.top_n).copy()
+        # Ordenar por ponderación y (si top_n) tomar las Top N empresas
+        df_top = df.sort_values(by='Weight', ascending=False)
+        if self.top_n:
+            df_top = df_top.head(self.top_n)
+        df_top = df_top.copy()
         df_top['Year'] = 2026
         return df_top
 
@@ -94,3 +103,95 @@ class HoldingsUniverseBuilder:
             raise ValueError("El universo aún no ha sido construido. Ejecuta el método .build() primero.")
         self.universe_df.to_csv(output_path, index=False)
         print(f"Dataset del Universo guardado correctamente en: {output_path}")
+
+
+# ====================================================================== #
+# Exportaciones de FactSet Universal Screening (opcional)
+# ====================================================================== #
+import re
+
+
+class FactSetScreeningLoader:
+    """
+    Lee las exportaciones de FactSet Universal Screening, una por fecha de
+    corte, con el criterio FG_CONSTITUENTS(SP50,<AAAA1231>,CLOSE) y las
+    columnas Symbol, Name, MktVal Co (con la misma fecha) y Perm. Sec. ID.
+
+    Nombre de archivo: SP500_AAAA.xlsx, donde AAAA es el año de la fecha de
+    corte (31/12/AAAA). Esa composición se usa para el año de tenencia
+    AAAA + 1 (se escoge al cierre de diciembre y se mantiene el año siguiente).
+
+    Devuelve las mismas columnas que HoldingsUniverseBuilder:
+        Year (año de tenencia), Company, Ticker, Weight (= market cap)
+    más Fuente, PermID y Fecha_corte.
+    """
+
+    def __init__(self, carpeta: str, patron: str = "SP500_*.xlsx"):
+        self.carpeta = carpeta
+        self.patron = patron
+        self.universe_df = pd.DataFrame()
+
+    @staticmethod
+    def _leer(filepath: str) -> pd.DataFrame:
+        crudo = pd.read_excel(filepath, header=None)
+        # La exportación trae unas filas de título antes del encabezado:
+        # se busca la fila cuya primera celda dice "Symbol".
+        fila = crudo.index[crudo.iloc[:, 0].astype(str).str.strip() == "Symbol"]
+        if len(fila) == 0:
+            raise ValueError("no se encontró el encabezado 'Symbol'")
+        df = pd.read_excel(filepath, header=int(fila[0]))
+        df.columns = [str(c).strip() for c in df.columns]
+
+        def col(*opciones):
+            for o in opciones:
+                for c in df.columns:
+                    if c.lower() == o.lower():
+                        return c
+            return None
+
+        c_mcap = col("MktVal Co", "Market Value", "Market Cap", "MktVal")
+        if c_mcap is None:
+            raise ValueError(f"no hay columna de market cap (columnas: {list(df.columns)})")
+        out = pd.DataFrame({
+            "Company": df[col("Name")],
+            "Ticker": df[col("Symbol")],
+            "Weight": pd.to_numeric(df[c_mcap], errors="coerce"),
+            "PermID": df[col("Perm. Sec. ID", "Permanent Security Identifier")]
+            if col("Perm. Sec. ID", "Permanent Security Identifier") else None,
+        })
+        return out.dropna(subset=["Ticker"])
+
+    def build(self) -> pd.DataFrame:
+        dfs = []
+        for filepath in sorted(glob.glob(os.path.join(self.carpeta, self.patron))):
+            m = re.search(r"(\d{4})", os.path.basename(filepath))
+            if not m:
+                continue
+            anio_corte = int(m.group(1))
+            try:
+                df = self._leer(filepath)
+            except Exception as e:
+                print(f"  AVISO: {os.path.basename(filepath)} no se pudo leer ({e})")
+                continue
+            df["Year"] = anio_corte + 1
+            df["Fecha_corte"] = f"{anio_corte}-12-31"
+            df["Fuente"] = "FactSet"
+            dfs.append(df)
+            print(f"  FactSet {os.path.basename(filepath)}: {len(df)} empresas "
+                  f"(corte 31/12/{anio_corte} -> año {anio_corte + 1})")
+        if dfs:
+            self.universe_df = pd.concat(dfs, ignore_index=True)
+        return self.universe_df
+
+
+def combinar_fuentes(holdings: pd.DataFrame, factset: pd.DataFrame | None) -> pd.DataFrame:
+    """Para cada año de tenencia usa FactSet si hay exportación de ese año;
+    si no, los holdings del SPY (Kaggle / State Street)."""
+    holdings = holdings.copy()
+    holdings["Fuente"] = holdings.get("Fuente", "Holdings SPY")
+    if factset is None or factset.empty:
+        return holdings
+    anios_fs = set(factset["Year"].unique())
+    resto = holdings[~holdings["Year"].isin(anios_fs)]
+    return pd.concat([resto, factset], ignore_index=True).sort_values(["Year", "Weight"],
+                                                                      ascending=[True, False])
