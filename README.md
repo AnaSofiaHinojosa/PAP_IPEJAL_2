@@ -69,7 +69,6 @@ PAP_IPEJAL_2/
 │
 ├── estimar_exposiciones.py            Parte 2 - función de regresión con restricción
 ├── generar_matriz.py                  Parte 2 - orquesta la Parte 2
-├── diagnosticar_ticker.py             Parte 2 - debug de n_obs bajos
 │
 ├── estimar_rendimiento_esperado.py    Parte 3 - factor esperado + rendimiento esperado
 ├── generar_rendimientos_esperados.py  Parte 3 - orquesta la Parte 3
@@ -121,9 +120,6 @@ python main.py
 
 # Parte 2 — matriz de exposiciones (betas)
 python generar_matriz.py
-
-# (opcional) si alguna empresa sale con n_obs sospechosamente bajo:
-python diagnosticar_ticker.py AFL
 
 # Parte 3 — rendimiento esperado por acción
 python generar_rendimientos_esperados.py
@@ -187,8 +183,7 @@ Todos están al inicio de cada script (no hay que buscar dentro del código):
 - Empresas que estuvieron muy pocos meses en el top 100 (o cuyo único año de
   membresía coincide con meses donde los factores aún no tenían suficiente
   cobertura) quedan con `n_obs` bajo en la Parte 2 y, por lo tanto, con
-  `NaN` en la Parte 3. Usa `diagnosticar_ticker.py <TICKER>` para confirmar
-  la causa exacta antes de decidir si se excluyen del análisis final.
+  `NaN` en la Parte 3. 
 - SEC EDGAR tiene límite de tasa (rate limit); `sec_edgar_fundamentals.py`
   ya mete pausas (`time.sleep`) entre requests — no lo corras en paralelo ni
   bajes la pausa para "ir más rápido", te va a bloquear el `User-Agent`.
