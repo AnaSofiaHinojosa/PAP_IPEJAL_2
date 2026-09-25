@@ -1,0 +1,3 @@
+ticker,etapa,error
+WFC,yahoo_precios,"Yahoo Finance regresó datos vacíos (ticker deslistado, renombrado o mal escrito)"
+V,sec_edgar,"EPS: Sin EPS utilizable (probé EarningsPerShareDiluted, EarningsPerShareBasic, EarningsPerShareBasicAndDiluted y utilidad neta / acciones promedio)"
