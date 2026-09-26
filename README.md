@@ -110,7 +110,7 @@ python main.py
 python generar_matriz.py
 
 # Parte 3 — rendimiento esperado por acción
-python generar_rendimientos_esperados.py
+python generar_rendimientos.py
 ```
 
 Cada script imprime en consola un resumen de lo que hizo y avisos de

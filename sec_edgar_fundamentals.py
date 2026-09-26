@@ -46,7 +46,7 @@ import time
 import requests
 import pandas as pd
 
-USER_AGENT = "Camila Zapata camila05danielazapatac@gmail.com"  # <-- CAMBIAR antes de correr
+USER_AGENT = "Ximena Herrera ximehv3@gmail.com"  # <-- CAMBIAR antes de correr
 HEADERS = {"User-Agent": USER_AGENT}
 
 TICKER_CIK_URL = "https://www.sec.gov/files/company_tickers.json"
