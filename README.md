@@ -26,18 +26,6 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` debe tener (el que trae el repo tiene errores — `os` y
-`glob` son de la librería estándar de Python, no se instalan con pip; y
-faltan `numpy`, `yfinance` y `requests`, que sí se usan):
-
-```
-pandas
-numpy
-openpyxl
-yfinance
-requests
-```
-
 Python 3.10+ (el código usa type hints tipo `list[str] | None`).
 
 ### Configuración antes de correr
