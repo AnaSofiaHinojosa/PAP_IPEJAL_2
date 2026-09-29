@@ -30,6 +30,8 @@ from estimar_exposiciones import (
     FACTOR_BASE_DEFAULT,
     MIN_OBS_DEFAULT,
     VALOR_RESTRICCION_DEFAULT,
+    ESTANDARIZAR_FACTORES_DEFAULT,
+    ESTANDARIZAR_Y_DEFAULT,
 )
 
 REGRESION = Path("salidas/regresion")
@@ -44,6 +46,8 @@ MIN_OBS = MIN_OBS_DEFAULT                 # mínimo de meses en común para esti
 VENTANA_MESES = None                      # None = usa todo el historial disponible (20 años);
                                            # o un entero, ej. 120, para usar solo los últimos N meses
 R2_AVISO = 0.10                           # avisa si el R^2 de una empresa es menor a esto
+ESTANDARIZAR = ESTANDARIZAR_FACTORES_DEFAULT   # z-score por factor (toda su serie)
+ESTANDARIZAR_Y = ESTANDARIZAR_Y_DEFAULT        # z-score global del exceso de rendimiento
 
 
 def cargar_rendimientos(archivo: Path) -> pd.DataFrame:
@@ -103,6 +107,8 @@ def main():
         restringir_suma=RESTRINGIR_SUMA,
         valor_restriccion=VALOR_RESTRICCION,
         min_obs=MIN_OBS,
+        estandarizar=ESTANDARIZAR,
+        estandarizar_y=ESTANDARIZAR_Y,
     )
 
     n_ok = matriz["r2"].notna().sum()
