@@ -11,9 +11,17 @@ riesgo) contra los factores, con la restricción sum(beta) = 1
 (estimar_exposiciones.py).
 
 Escribe en salidas/exposiciones/:
-    matriz_exposiciones.csv    una fila por empresa, una columna por factor
-    matriz_exposiciones.xlsx   lo mismo + hoja "Definiciones" y avisos de
-                                calidad (R^2 bajo, pocas observaciones, etc.)
+    matriz_exposiciones.csv        una fila por empresa, una columna por factor
+    matriz_exposiciones.xlsx       lo mismo + hoja "Definiciones" y avisos de
+                                    calidad (R^2 bajo, pocas observaciones, etc.)
+    factores_estandarizacion.csv   media y desviación de cada factor usadas
+                                    para estandarizar (si ESTANDARIZAR=True).
+                                    IMPORTANTE: la Parte 3 (generar_rendimientos.py)
+                                    lee este archivo y usa las MISMAS media/desviación
+                                    para que el factor esperado quede en la misma
+                                    escala que los betas (si no, los betas estarían
+                                    calibrados en "desviaciones estándar del factor
+                                    crudo" pero el factor esperado en otra escala).
 
 Antes de correr:
     - Correr main.py y construir_factores.py para que
@@ -128,6 +136,16 @@ def main():
               f"{' ...' if len(bajo_r2) > 15 else ''}")
 
     matriz.to_csv(SALIDA / "matriz_exposiciones.csv")
+
+    # Guardar la media/desviación usadas para estandarizar los factores
+    # (matriz.attrs se pierde al hacer to_csv, así que se guarda aparte).
+    # La Parte 3 (generar_rendimientos.py) DEBE usar estos mismos valores
+    # para que el factor esperado quede en la MISMA escala que los betas.
+    estandarizacion = matriz.attrs.get("estandarizacion")
+    if estandarizacion is not None:
+        estandarizacion.rename_axis("factor").to_csv(SALIDA / "factores_estandarizacion.csv")
+        print(f"  medias/desviaciones de estandarización guardadas en "
+              f"{SALIDA / 'factores_estandarizacion.csv'} (la Parte 3 las necesita)")
 
     definiciones = pd.DataFrame([
         ("Método", "Regresión MCO del rendimiento mensual de cada acción "

@@ -7,11 +7,20 @@ Lee:
     salidas/regresion/factores.csv                 (Parte 1: rendimiento
                                                      mensual de cada factor)
 
+IMPORTANTE (consistencia con la Parte 2): el factor esperado se calcula
+sobre el factor YA estandarizado con la MISMA media/desviación que se usó
+para ajustar los betas (salidas/exposiciones/factores_estandarizacion.csv).
+Si esa estandarización no está disponible (se corrió generar_matriz.py con
+ESTANDARIZAR=False), se usa el factor crudo, para que quede en la misma
+escala (cruda) que usaron esos betas.
+
 Para cada ventana en VENTANAS (3, 6 y 12 meses por defecto):
-    1. Calcula el rendimiento esperado de cada factor: z-score del rolling
-       mean de los últimos `ventana` meses (rezagado, ver
-       estimar_rendimiento_esperado.py).
-    2. Calcula el rendimiento esperado de cada acción:
+    1. Estandariza los factores con media/desv de la Parte 2.
+    2. Calcula el rendimiento esperado de cada factor: rolling mean de los
+       últimos `ventana` meses del factor YA estandarizado, rezagado (ver
+       estimar_rendimiento.py). Ya NO se le saca un segundo z-score al
+       rolling mean.
+    3. Calcula el rendimiento esperado de cada acción:
            E[R_i,t] = sum_k beta_i,k * factor_esperado_k,t
 
 Escribe en salidas/rendimientos_esperados/:
@@ -25,13 +34,14 @@ import pandas as pd
 
 from estimar_exposiciones import FACTORES_DEFAULT
 from estimar_rendimiento import (
+    aplicar_estandarizacion,
     calcular_matriz_factores_esperados,
     calcular_rendimiento_esperado,
     REZAGO_DEFAULT,
-    METODO_Z_DEFAULT,
 )
 
 EXPOSICIONES = Path("salidas/exposiciones/matriz_exposiciones.csv")
+ESTANDARIZACION = Path("salidas/exposiciones/factores_estandarizacion.csv")
 FACTORES_CSV = Path("salidas/regresion/factores.csv")
 SALIDA = Path("salidas/rendimientos_esperados")
 
@@ -39,7 +49,6 @@ SALIDA = Path("salidas/rendimientos_esperados")
 FACTORES = FACTORES_DEFAULT
 VENTANAS = [3, 6, 12]          # meses del rolling mean; el enunciado pide probar estas 3
 REZAGO_MESES = REZAGO_DEFAULT  # 1 = evita look-ahead bias; poner 0 si el profe pide sin rezago
-METODO_Z = METODO_Z_DEFAULT    # "expandido" (recomendado) o "completo"
 INCLUIR_ALPHA = False          # el enunciado solo pide sum(beta_k * factor_esperado_k)
 
 
@@ -56,6 +65,17 @@ def main():
     if faltan:
         raise ValueError(f"Faltan factores en factores.csv: {faltan}")
 
+    if ESTANDARIZACION.exists():
+        stats = pd.read_csv(ESTANDARIZACION, index_col="factor")
+        print(f"  usando media/desviación de la Parte 2 ({ESTANDARIZACION}) "
+              "para estandarizar los factores antes del rolling mean")
+    else:
+        stats = None
+        print(f"  AVISO: no encontré {ESTANDARIZACION} -> se usan los factores "
+              "crudos (sin estandarizar). Esto es correcto solo si "
+              "generar_matriz.py se corrió con ESTANDARIZAR=False.")
+    factores_estandarizados = aplicar_estandarizacion(factores_df, FACTORES, stats)
+
     # Empresas sin exposiciones válidas (n_obs insuficiente en la Parte 2)
     sin_beta = matriz_exposiciones[FACTORES].isna().any(axis=1)
     if sin_beta.any():
@@ -68,10 +88,10 @@ def main():
     hojas_excel = {}
 
     for ventana in VENTANAS:
-        print(f"\nVentana de {ventana} meses (rezago={REZAGO_MESES}, z-score={METODO_Z})...")
+        print(f"\nVentana de {ventana} meses (rezago={REZAGO_MESES})...")
         factores_esperados = calcular_matriz_factores_esperados(
-            factores_df, factores=FACTORES, ventana=ventana,
-            rezago=REZAGO_MESES, metodo_z=METODO_Z,
+            factores_estandarizados, factores=FACTORES, ventana=ventana,
+            rezago=REZAGO_MESES,
         )
         rendimiento_esperado = calcular_rendimiento_esperado(
             matriz_exposiciones, factores_esperados,
