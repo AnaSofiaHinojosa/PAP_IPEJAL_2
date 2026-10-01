@@ -163,6 +163,5 @@ def main():
 
     print(f"\nResultados completos en {SALIDA}")
 
-
 if __name__ == "__main__":
     main()
