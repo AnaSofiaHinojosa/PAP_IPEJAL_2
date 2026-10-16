@@ -188,3 +188,7 @@ def estimar_matriz_exposiciones(
     if stats is not None:
         matriz.attrs["estandarizacion"] = stats
     return matriz
+
+
+if __name__ == "__main__":
+    main()

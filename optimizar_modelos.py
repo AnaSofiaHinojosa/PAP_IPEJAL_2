@@ -20,13 +20,24 @@ Criterio de selección: RANKING PROMEDIO.
     Se promedian los tres lugares y gana el promedio más bajo.
     Desempate: mayor IC Ratio.
 
+Estandarización (igual que la Parte 2): factores (ESTANDARIZAR) y rendimiento
+en exceso (ESTANDARIZAR_Y), ambos con datos solo hasta cada corte. Con los dos
+activos, los betas quedan en la misma escala y la restricción sum(beta)=1 tiene
+sentido. El IC no cambia por la escala del E[R] (es correlación de rangos).
+
 Parámetros que se barren (rejilla):
     VENTANAS_BETA     ventana móvil para RE-ESTIMAR los betas de cada acción
                        (None = histórico completo, como en la Parte 2 original)
     MIN_OBS_GRID      mínimo de observaciones exigido en esa regresión
     VENTANAS_FACTOR   ventana del rolling mean del factor esperado (Parte 3)
 
+Datos de entrenamiento (ENTRENAR_CON_HISTORIAL):
+    True  -> betas con todo el historial de precios (rendimientos.csv)
+    False -> betas solo con los meses en el Top 100 (rendimientos_miembros.csv)
+    El IC SIEMPRE se mide solo con las empresas del Top 100 de cada mes.
+
 Lee:
+    salidas/regresion/rendimientos.csv
     salidas/regresion/rendimientos_miembros.csv
     salidas/regresion/factores.csv
 
@@ -59,8 +70,16 @@ VENTANAS_FACTOR = [3, 6, 12]            # ventana del rolling mean del factor es
 FRECUENCIA_REESTIMACION = FRECUENCIA_DEFAULT  # cada cuántos meses se recalculan los betas
 REZAGO_FACTOR = 1                       # evita look-ahead en el factor esperado
 ESTANDARIZAR = True                     # estandarizar factores en cada corte (consistente con la Parte 2)
+ESTANDARIZAR_Y = True                   # estandarizar también el rendimiento en exceso en cada corte
+                                        # (z-score global, solo con datos hasta el corte; igual que la Parte 2)
 MIN_ACCIONES_IC = 10                    # mínimo de acciones con dato para calcular IC ese mes
 MIN_PERIODOS = 24                       # meses mínimos de IC para que un modelo entre a la comparación
+# True  = los betas se estiman con TODO el historial de precios de cada empresa
+#         (rendimientos.csv), aunque todavía no estuviera en el Top 100.
+#         Resuelve las empresas recién entradas (revisar_cobertura_minobs.py).
+# False = solo con los meses en el Top 100 (rendimientos_miembros.csv), como antes.
+# En ambos casos el IC se mide SOLO con las empresas del Top 100 de ese mes.
+ENTRENAR_CON_HISTORIAL = True
 
 
 def cargar_rendimientos(archivo: Path) -> pd.DataFrame:
@@ -110,10 +129,18 @@ def main():
     SALIDA.mkdir(parents=True, exist_ok=True)
 
     print("Leyendo rendimientos y factores...")
-    rendimientos = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
+    rendimientos_miembros = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
     factores_df = cargar_factores(REGRESION / "factores.csv")
-    # El rendimiento "real" (ex post) para el IC es el mismo panel de rendimientos
-    rendimiento_real = rendimientos
+    # El rendimiento "real" (ex post) para el IC: solo empresas del Top 100 ese mes
+    rendimiento_real = rendimientos_miembros
+    # Panel con el que se estiman los betas
+    if ENTRENAR_CON_HISTORIAL:
+        rendimientos = cargar_rendimientos(REGRESION / "rendimientos.csv")
+        print("  Betas con historial completo (rendimientos.csv); IC solo con miembros del Top 100")
+    else:
+        rendimientos = rendimientos_miembros
+        print("  Betas e IC solo con meses en el Top 100 (rendimientos_miembros.csv)")
+    print(f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
 
     combinaciones = list(product(VENTANAS_BETA, MIN_OBS_GRID, VENTANAS_FACTOR))
     print(f"\nCorriendo {len(combinaciones)} modelos "
@@ -140,6 +167,7 @@ def main():
             rezago_factor=REZAGO_FACTOR,
             estandarizar=ESTANDARIZAR,
             min_acciones_ic=MIN_ACCIONES_IC,
+            estandarizar_y=ESTANDARIZAR_Y,     # pasa a estimar_matriz_exposiciones
         )
         resultados_por_modelo[modelo_id] = resultado
         parametros[modelo_id] = {
@@ -245,7 +273,6 @@ def main():
         definiciones.to_excel(xw, sheet_name="Definiciones", index=False)
 
     print(f"\nResultados completos en {SALIDA}")
-
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,10 @@
 generar_matriz.py - Parte 2: Matriz de exposiciones.
 
 Lee las salidas de la Parte 1 (construir_factores.py):
-    salidas/regresion/rendimientos_miembros.csv   fecha x ticker (formato largo)
+    salidas/regresion/rendimientos.csv            fecha x ticker, todo el historial
+                                                  (si ENTRENAR_CON_HISTORIAL = True)
+    salidas/regresion/rendimientos_miembros.csv   fecha x ticker, solo meses en el
+                                                  Top 100 (si ENTRENAR_CON_HISTORIAL = False)
     salidas/regresion/factores.csv                fecha x factor (formato largo)
 
 Para cada acción, estima su exposición (beta) a cada factor propuesto
@@ -55,7 +58,15 @@ VENTANA_MESES = None                      # None = usa todo el historial disponi
                                            # o un entero, ej. 120, para usar solo los últimos N meses
 R2_AVISO = 0.10                           # avisa si el R^2 de una empresa es menor a esto
 ESTANDARIZAR = ESTANDARIZAR_FACTORES_DEFAULT   # z-score por factor (toda su serie)
-ESTANDARIZAR_Y = ESTANDARIZAR_Y_DEFAULT        # z-score global del exceso de rendimiento
+ESTANDARIZAR_Y = True                          # z-score global del exceso de rendimiento
+                                               # (una sola media/desv para TODAS las acciones).
+                                               # Necesario con factores estandarizados + sum(beta)=1:
+                                               # así ambos lados de la regresión quedan en
+                                               # desviaciones estándar (si no, R^2 ~ -14).
+# True  = cada empresa se estima con TODO su historial de precios (rendimientos.csv),
+#         aunque todavía no estuviera en el Top 100 (mismo criterio que optimizar_modelos.py).
+# False = solo con los meses en que estuvo en el Top 100 (rendimientos_miembros.csv), como antes.
+ENTRENAR_CON_HISTORIAL = True
 
 
 def cargar_rendimientos(archivo: Path) -> pd.DataFrame:
@@ -94,7 +105,9 @@ def main():
     SALIDA.mkdir(parents=True, exist_ok=True)
 
     print("Leyendo rendimientos y factores de la Parte 1...")
-    rendimientos = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
+    archivo_rend = "rendimientos.csv" if ENTRENAR_CON_HISTORIAL else "rendimientos_miembros.csv"
+    print(f"  rendimientos de: {archivo_rend}")
+    rendimientos = cargar_rendimientos(REGRESION / archivo_rend)
     factores_df = cargar_factores(REGRESION / "factores.csv")
     print(f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
     print(f"  factores disponibles: {', '.join(factores_df.columns)}")
@@ -105,6 +118,7 @@ def main():
 
     rendimientos, factores_df = recortar_ventana(rendimientos, factores_df, VENTANA_MESES)
 
+    print(f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
     print(f"\nEstimando exposiciones (restricción sum(beta)={VALOR_RESTRICCION}: "
           f"{'activada' if RESTRINGIR_SUMA else 'desactivada'}, factor base = {FACTOR_BASE})...")
     matriz = estimar_matriz_exposiciones(
@@ -159,6 +173,13 @@ def main():
                     else f"Últimos {VENTANA_MESES} meses"),
         ("Mínimo de observaciones", f"{MIN_OBS} meses con dato simultáneo en "
                                     "la acción y en todos los factores"),
+        ("Estandarización", ("Factores: z-score de cada factor con toda su serie. " if ESTANDARIZAR else "Factores sin estandarizar. ")
+                            + ("Rendimientos en exceso: z-score global (una media y desv. para todas las acciones); "
+                               "los betas quedan en desv. del rendimiento por desv. del factor"
+                               if ESTANDARIZAR_Y else "Rendimientos en exceso sin estandarizar")),
+        ("Datos de entrenamiento", "Todo el historial de precios de cada empresa (rendimientos.csv)"
+                                   if ENTRENAR_CON_HISTORIAL else
+                                   "Solo meses en el Top 100 (rendimientos_miembros.csv)"),
         ("alpha", "Intercepto de la regresión (rendimiento no explicado por los factores)"),
         ("r2", "R^2 de la regresión; valores bajos indican exposiciones poco confiables"),
         ("n_obs", "Meses usados en la regresión de esa empresa"),
