@@ -74,7 +74,7 @@ ESTANDARIZAR_Y = True                   # estandarizar también el rendimiento e
                                         # (z-score global, solo con datos hasta el corte; igual que la Parte 2)
 MIN_ACCIONES_IC = 10                    # mínimo de acciones con dato para calcular IC ese mes
 MIN_PERIODOS = 24                       # meses mínimos de IC para que un modelo entre a la comparación
-# True  = los betas se estiman con TODO el historial de precios de cada empresa
+# True  = los betas se estiman con el historial completo de precios de cada empresa
 #         (rendimientos.csv), aunque todavía no estuviera en el Top 100.
 #         Resuelve las empresas recién entradas (revisar_cobertura_minobs.py).
 # False = solo con los meses en el Top 100 (rendimientos_miembros.csv), como antes.

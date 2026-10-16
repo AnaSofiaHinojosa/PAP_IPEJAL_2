@@ -2,7 +2,7 @@
 generar_matriz.py - Parte 2: Matriz de exposiciones.
 
 Lee las salidas de la Parte 1 (construir_factores.py):
-    salidas/regresion/rendimientos.csv            fecha x ticker, todo el historial
+    salidas/regresion/rendimientos.csv            fecha x ticker, el historial completo
                                                   (si ENTRENAR_CON_HISTORIAL = True)
     salidas/regresion/rendimientos_miembros.csv   fecha x ticker, solo meses en el
                                                   Top 100 (si ENTRENAR_CON_HISTORIAL = False)
