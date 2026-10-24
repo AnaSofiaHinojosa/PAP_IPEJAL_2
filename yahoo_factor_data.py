@@ -1,27 +1,3 @@
-"""
-Descarga de datos de Yahoo Finance para la construcción de factores del PAP
-(Instituto de Pensiones de Jalisco).
-
-Ventana: enero 2006 - fecha actual, frecuencia mensual. Por ticker entrega:
-    - precio_ajustado : cierre ajustado por splits y dividendos
-                        (rendimiento total -> Volatilidad y Momentum)
-    - precio_cierre   : cierre ajustado solo por splits (sin dividendos)
-                        -> para P/E y market cap
-    - volumen         : volumen del mes (ajustado por splits) -> Liquidez
-y guarda la lista de splits de cada ticker (self.splits), que
-sec_edgar_fundamentals.py usa para poner la EPS y las acciones de EDGAR en
-la misma base de acciones que estos precios.
-
-Además: S&P 500 (^GSPC) para el factor Mercado y T-bill de 13 semanas
-(^IRX) como tasa libre de riesgo aproximada.
-
-Las fechas se guardan como FIN de mes (el cierre mensual de Yahoo es el
-del último día hábil del mes), para empatar bien con la fecha de
-publicación de los datos de EDGAR.
-
-Requiere: pip install yfinance pandas --break-system-packages
-"""
-
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd

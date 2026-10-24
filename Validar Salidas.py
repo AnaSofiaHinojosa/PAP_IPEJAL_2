@@ -1,33 +1,3 @@
-"""
-validar_salidas.py - Revisa los Excel de salidas/empresas y marca datos
-sospechosos ANTES de usarlos para construir factores.
-
-Qué busca (por empresa):
-  ACCIONES
-    - escala: una observación a >5x o <0.2x de la mediana de la empresa
-      (típico de XBRL mal etiquetado: acciones x1,000 o x1,000,000)
-    - salto: cambio trimestral de más de +-50% que no coincide con un split
-  EPS
-    - escala: EPS trimestral 1,000 veces menor a la mediana (|EPS| casi cero)
-    - extremo: |EPS| trimestral >5x la mediana de sus 8 vecinos y >3x
-      el mismo trimestre de años vecinos (estacionalidad) (puede ser real:
-      ganancias/pérdidas extraordinarias; hay que revisarlo a mano)
-    - factores: factores de ajuste distintos dentro de la misma fecha de
-      publicación (señal de split mal aplicado)
-  MENSUAL
-    - market cap fuera de [1e9, 1e13] USD
-    - rotación mensual (volumen / acciones) < 0.0005 (ALTA) o > 2 (MEDIA)
-    - P/E > 200 (informativo)
-    - huecos en medio de la serie de P/E o market cap
-
-Uso:
-    python validar_salidas.py                  # lee salidas/empresas
-    python validar_salidas.py otra/carpeta
-
-Salida: salidas/validacion.csv  (una fila por alerta) y un resumen en consola.
-Severidad: ALTA = casi seguro error de datos; MEDIA = revisar; INFO = contexto.
-"""
-
 import sys
 from pathlib import Path
 import numpy as np

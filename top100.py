@@ -1,18 +1,3 @@
-"""
-top100.py - Selección ANUAL del universo (regla del profesor, versión 2):
-
-  Cada año de tenencia A, se toman las empresas que estaban en el S&P 500
-  al cierre del año anterior (31/12/A-1) y se escogen las 100 con mayor
-  market cap en esa fecha. Ese grupo se mantiene todo el año A. Cuenta
-  cualquier empresa que haya estado en el índice, aunque después la
-  hayan comprado, haya quebrado o haya salido del índice a los pocos meses.
-
-  Fuentes (Datos.py):
-    - FactSet Screening (SP500_AAAA.xlsx): market cap al 31/12 y Perm. ID.
-    - Holdings del SPY por año (Kaggle + State Street): el peso en el SPY es
-      proporcional al market cap ajustado por flotación, así que ordena igual.
-"""
-
 import pandas as pd
 
 import re

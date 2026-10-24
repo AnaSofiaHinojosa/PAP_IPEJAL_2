@@ -1,32 +1,3 @@
-"""
-main.py - Pipeline completo del PAP:
-    1. Construye el universo del S&P 500 por año (Datos.py): holdings del SPY
-       y, si existen, exportaciones de FactSet Screening (Data/factset/)
-    2. Selección ANUAL: cada año, las 100 de mayor market cap del S&P 500 al
-       cierre de diciembre anterior, desde 2010 (top100.py)
-    3. Descarga precios/volumen y mercado desde Yahoo Finance
-    4. Descarga EPS y acciones en circulación desde SEC EDGAR
-    5. Guarda UN Excel por empresa + mercado + reportes
-    6. Construye los factores y los rendimientos para la regresión
-       (construir_factores.py -> salidas/regresion)
-
-Salidas (carpeta "salidas"):
-    empresas/<TICKER>.xlsx      una por empresa, con hojas:
-        Mensual   fecha, precios, volumen, EPS TTM, P/E, acciones,
-                  market cap, rotación (volumen / acciones)
-        EPS       EPS trimestral de EDGAR (limpia) y su TTM
-        Acciones  acciones en circulación de EDGAR
-        Info      empresa, rank, CIK, tags usados, cobertura y errores
-    mercado.xlsx                S&P 500 y T-bill mensual
-    reporte_errores.csv         todos los errores por ticker y etapa
-    reporte_cobertura_edgar.csv qué se encontró en EDGAR para cada ticker
-    resumen_universo.xlsx       una fila por empresa (cobertura de todo)
-
-Antes de correr:
-    - pip install yfinance requests pandas openpyxl --break-system-packages
-    - Cambia USER_AGENT en sec_edgar_fundamentals.py por tu nombre y correo real
-"""
-
 from pathlib import Path
 import pandas as pd
 

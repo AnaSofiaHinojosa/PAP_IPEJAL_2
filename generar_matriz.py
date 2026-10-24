@@ -1,36 +1,3 @@
-"""
-generar_matriz.py - Parte 2: Matriz de exposiciones.
-
-Lee las salidas de la Parte 1 (construir_factores.py):
-    salidas/regresion/rendimientos.csv            fecha x ticker, el historial completo
-                                                  (si ENTRENAR_CON_HISTORIAL = True)
-    salidas/regresion/rendimientos_miembros.csv   fecha x ticker, solo meses en el
-                                                  Top 100 (si ENTRENAR_CON_HISTORIAL = False)
-    salidas/regresion/factores.csv                fecha x factor (formato largo)
-
-Para cada acción, estima su exposición (beta) a cada factor propuesto
-mediante una regresión de su rendimiento (en exceso de la tasa libre de
-riesgo) contra los factores, con la restricción sum(beta) = 1
-(estimar_exposiciones.py).
-
-Escribe en salidas/exposiciones/:
-    matriz_exposiciones.csv        una fila por empresa, una columna por factor
-    matriz_exposiciones.xlsx       lo mismo + hoja "Definiciones" y avisos de
-                                    calidad (R^2 bajo, pocas observaciones, etc.)
-    factores_estandarizacion.csv   media y desviación de cada factor usadas
-                                    para estandarizar (si ESTANDARIZAR=True).
-                                    IMPORTANTE: la Parte 3 (generar_rendimientos.py)
-                                    lee este archivo y usa las MISMAS media/desviación
-                                    para que el factor esperado quede en la misma
-                                    escala que los betas (si no, los betas estarían
-                                    calibrados en "desviaciones estándar del factor
-                                    crudo" pero el factor esperado en otra escala).
-
-Antes de correr:
-    - Correr main.py y construir_factores.py para que
-      existan los archivos en salidas/regresion/.
-"""
-
 from pathlib import Path
 import numpy as np
 import pandas as pd

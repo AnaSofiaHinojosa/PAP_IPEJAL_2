@@ -1,54 +1,3 @@
-"""
-optimizar_modelos.py - Parte 4: Backtesting + IC + Selección del modelo.
-
-"Algoritmo de optimización a partir del IC": como las variables que se están
-afinando son discretas por naturaleza (ventanas de 12/36/60 meses, no "12.37
-meses"), lo correcto aquí NO es un optimizador de gradiente — es una
-BÚSQUEDA EN REJILLA (grid search): se corre el backtest completo para cada
-combinación posible de parámetros, y se elige el mejor modelo.
-
-Comparación justa: todos los modelos se evalúan en LAS MISMAS FECHAS
-(la intersección de los meses donde todos tienen IC). Así un modelo con
-ventana de 120 meses, que arranca más tarde, no se compara contra otro que
-se evaluó en un periodo distinto.
-
-Criterio de selección: RANKING PROMEDIO.
-    Cada modelo recibe un lugar en:
-        IC medio   (mayor es mejor)
-        IC std     (menor es mejor)
-        IC Ratio   (mayor es mejor)
-    Se promedian los tres lugares y gana el promedio más bajo.
-    Desempate: mayor IC Ratio.
-
-Estandarización (igual que la Parte 2): factores (ESTANDARIZAR) y rendimiento
-en exceso (ESTANDARIZAR_Y), ambos con datos solo hasta cada corte. Con los dos
-activos, los betas quedan en la misma escala y la restricción sum(beta)=1 tiene
-sentido. El IC no cambia por la escala del E[R] (es correlación de rangos).
-
-Parámetros que se barren (rejilla):
-    VENTANAS_BETA     ventana móvil para RE-ESTIMAR los betas de cada acción
-                       (None = histórico completo, como en la Parte 2 original)
-    MIN_OBS_GRID      mínimo de observaciones exigido en esa regresión
-    VENTANAS_FACTOR   ventana del rolling mean del factor esperado (Parte 3)
-
-Datos de entrenamiento (ENTRENAR_CON_HISTORIAL):
-    True  -> betas con todo el historial de precios (rendimientos.csv)
-    False -> betas solo con los meses en el Top 100 (rendimientos_miembros.csv)
-    El IC SIEMPRE se mide solo con las empresas del Top 100 de cada mes.
-
-Lee:
-    salidas/regresion/rendimientos.csv
-    salidas/regresion/rendimientos_miembros.csv
-    salidas/regresion/factores.csv
-
-Escribe en salidas/backtesting/:
-    comparacion_modelos.csv      una fila por modelo, con sus métricas de IC y su ranking
-    comparacion_modelos.xlsx     lo mismo + hoja de definiciones
-    mejor_modelo_ic_serie.csv    serie de tiempo del IC del modelo ganador
-    mejor_modelo_rendimiento_esperado.csv
-    mejor_modelo_exposiciones/   un CSV por fecha de reestimación del ganador
-"""
-
 from pathlib import Path
 from itertools import product
 import numpy as np
@@ -60,9 +9,6 @@ from backtesting import backtest_modelo, FRECUENCIA_DEFAULT
 REGRESION = Path("salidas/regresion")
 SALIDA = Path("salidas/backtesting")
 
-# ------------------------------------------------------------------ #
-# Rejilla de modelos a comparar — AJUSTA AQUÍ
-# ------------------------------------------------------------------ #
 FACTORES = FACTORES_DEFAULT
 VENTANAS_BETA = [None, 36, 60, 120]     # None = histórico completo; resto en meses
 MIN_OBS_GRID = [12, 18, 24]             # mínimo de meses para poder estimar una acción

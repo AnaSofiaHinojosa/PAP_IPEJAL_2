@@ -1,16 +1,3 @@
-"""
-diagnostico_xbrl.py - Lista qué datos de ACCIONES, EPS y UTILIDAD trae el API
-de company facts de la SEC para unas empresas, con su primer y último
-periodo. Sirve para ver por qué una empresa se queda sin datos (BRK.B y V).
-
-Uso (en la carpeta del proyecto):
-    python diagnostico_xbrl.py BRK.B V
-
-Salida:
-    consola: tabla por empresa
-    salidas/diagnostico_xbrl.csv
-"""
-
 import sys
 import re
 from pathlib import Path

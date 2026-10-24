@@ -105,9 +105,7 @@ class HoldingsUniverseBuilder:
         print(f"Dataset del Universo guardado correctamente en: {output_path}")
 
 
-# ====================================================================== #
 # Exportaciones de FactSet Universal Screening (opcional)
-# ====================================================================== #
 import re
 
 

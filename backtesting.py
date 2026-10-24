@@ -1,55 +1,3 @@
-"""
-backtesting.py - Parte 4, Parte 1 (Backtesting) y Parte 2 (IC y selección).
-
-DISEÑO (para que sea walk-forward de verdad, sin look-ahead bias):
-
-1) RE-ESTIMACIÓN DE BETAS POR VENTANA MÓVIL
-   En vez de un solo beta fijo (todo el histórico, como en la Parte 2), aquí
-   los betas se recalculan periódicamente usando SOLO datos hasta la fecha de
-   corte:
-       - `ventana_beta = None`  -> usa TODO el histórico disponible hasta esa
-         fecha (expanding window; equivale a repetir la Parte 2 en cada
-         corte, con más datos cada vez).
-       - `ventana_beta = N`     -> usa solo los últimos N meses antes de esa
-         fecha (rolling window fijo; permite comparar "todo el histórico" vs.
-         "los últimos 12/36/60 meses", que es justo lo que pide el enunciado).
-   `frecuencia_meses` controla cada cuántos meses se vuelve a correr la
-   regresión (por defecto 12 = una vez al año), para no recalcular betas
-   cada mes (ni computacionalmente necesario ni realista: nadie recalibra
-   un modelo de factores todos los meses en la práctica).
-   Los betas estimados en la fecha de corte `c` se usan para predecir TODOS
-   los meses posteriores a `c` (hasta el siguiente corte) — nunca para
-   predecir `c` o meses anteriores.
-
-2) RENDIMIENTO ESPERADO WALK-FORWARD
-   Para cada mes t: E[R_i,t] = sum_k beta_i,k(corte aplicable) *
-   factor_esperado_k,t, donde beta_i,k viene del corte más reciente ANTES de
-   t, y factor_esperado_k,t es el z-score del rolling mean del factor
-   (Parte 3, también construido solo con información hasta t-1).
-
-   CONSISTENCIA DE ESCALA (factor esperado vs. betas): en cada fecha de
-   corte, los betas se ajustan contra el factor estandarizado CON LA MEDIA Y
-   DESVIACIÓN DE ESE MISMO CORTE (solo datos hasta esa fecha — nunca con
-   estadísticas calculadas con datos futuros). El factor esperado que se usa
-   para predecir los meses siguientes a ese corte se construye con ESA MISMA
-   media/desviación, no con una global ni con una recalculada cada mes. Así,
-   para cada tramo entre dos cortes, beta y factor esperado están en la
-   misma escala.
-
-3) COEFICIENTE DE INFORMACIÓN (IC)
-   Para cada mes t, correlación de Spearman (rank correlation) entre el
-   rendimiento esperado de cada acción (ex ante, calculado con info hasta
-   t-1) y su rendimiento real observado en t (ex post):
-       IC_t = spearman( E[R_.,t] , R_.,t )
-   Se arma una serie de tiempo de IC_t, y se resume con:
-       IC medio, desviación estándar del IC, IC Ratio = IC medio / std(IC)
-       (la versión del Information Ratio para el IC: qué tan grande es la
-       señal promedio relativo a qué tan ruidosa/inestable es en el tiempo),
-       t-stat, y hit rate (% de meses con IC > 0).
-
-Requiere: numpy, pandas, scipy
-"""
-
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -68,9 +16,7 @@ FRECUENCIA_DEFAULT = 12     # meses entre re-estimaciones de beta
 MIN_ACCIONES_IC = 10        # mínimo de acciones con dato simultáneo para calcular IC ese mes
 
 
-# --------------------------------------------------------------------- #
 # 1) Re-estimación de betas por ventana móvil (walk-forward)
-# --------------------------------------------------------------------- #
 def construir_exposiciones_rolling(
     rendimientos: pd.DataFrame,
     factores_df: pd.DataFrame,
@@ -131,9 +77,7 @@ def _beta_aplicable(fecha: pd.Timestamp, cortes_ordenados: list[pd.Timestamp]) -
     return max(anteriores) if anteriores else None
 
 
-# --------------------------------------------------------------------- #
 # 2) Rendimiento esperado walk-forward
-# --------------------------------------------------------------------- #
 def _factor_esperado_por_corte(
     factores_df: pd.DataFrame,
     factores: list[str],
@@ -203,9 +147,7 @@ def calcular_rendimiento_esperado_backtest(
     return pd.DataFrame(filas).T.sort_index()
 
 
-# --------------------------------------------------------------------- #
 # 3) Coeficiente de Información (IC)
-# --------------------------------------------------------------------- #
 def calcular_ic_serie(
     rendimiento_esperado: pd.DataFrame,
     rendimiento_real: pd.DataFrame,
@@ -249,9 +191,7 @@ def resumen_ic(ic_df: pd.DataFrame) -> dict:
             "t_stat": t_stat, "hit_rate": hit_rate, "n_periodos": n}
 
 
-# --------------------------------------------------------------------- #
 # Función de conveniencia: corre 1 y 2 y 3 juntos para UN modelo
-# --------------------------------------------------------------------- #
 def backtest_modelo(
     rendimientos: pd.DataFrame,
     factores_df: pd.DataFrame,

@@ -1,44 +1,3 @@
-"""
-comparar_modelos.py - Compara los 4 modelos del PAP (diseño 2x2):
-
-    Modelo 1: factores estandarizados,  sum(beta) = 1     salidas/backtesting
-    Modelo 2: factores estandarizados,  betas libres      salidas/backtesting_sin_restriccion
-    Modelo 3: factores SIN estandarizar, sum(beta) = 1    salidas/backtesting_sin_estandarizar
-    Modelo 4: factores SIN estandarizar, betas libres     salidas/backtesting_sin_restriccion_sin_estandarizar
-
-NO recalcula nada: lee lo que ya escribió cada optimizar_modelos*.py
-(comparacion_modelos.csv y mejor_modelo_ic_serie.csv). Si falta algún modelo
-lo omite con un aviso, así que puede correrse con 2 o 3 modelos.
-
-Cuatro comparaciones, cada una responde una pregunta distinta:
-
-  A) GANADOR DE CADA MODELO (su propio periodo): qué configuración ganó y con
-     qué IC. Es lo que reporta cada optimizar_modelos*.py.
-
-  B) GANADORES EN LAS MISMAS FECHAS: se recalculan las métricas del IC de los
-     ganadores sobre la intersección de sus series, y se prueba (t-stat de la
-     diferencia mensual de IC, pareada) si cada modelo es distinto al modelo 1.
-
-  C) MISMA CONFIGURACIÓN EN LOS 4 MODELOS: las 36 configuraciones de la rejilla
-     lado a lado. El promedio de la rejilla es la comparación más honesta,
-     porque quedarse con el mejor de 36 siempre infla el resultado (sesgo de
-     selección).
-
-  D) EFECTOS PRINCIPALES DEL 2x2 (sobre el promedio de la rejilla): cuánto
-     cambia el IC al quitar la restricción, al no estandarizar, y si las dos
-     decisiones interactúan.
-
-Las métricas se calculan con resumir_ic() de optimizar_modelos.py (misma
-definición que en cada backtest).
-
-Escribe en salidas/comparacion_modelos/:
-    comparar_modelos.xlsx            una hoja por comparación + definiciones
-    A_ganadores.csv, B_ganadores_mismas_fechas.csv,
-    C_misma_configuracion.csv, C_resumen_rejilla.csv, D_efectos_2x2.csv
-    ic_series_ganadores.csv          IC mensual de cada ganador
-    ic_acumulado.png                 (si matplotlib está instalado)
-"""
-
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -119,9 +78,7 @@ def cargar_modelos():
     return cargados
 
 
-# ------------------------------------------------------------------ #
 # A) Ganador de cada modelo
-# ------------------------------------------------------------------ #
 def tabla_a(modelos):
     filas = []
     for k, m in modelos.items():
@@ -131,10 +88,7 @@ def tabla_a(modelos):
                       **{c: g[c] for c in COLUMNAS_METRICAS}})
     return pd.DataFrame(filas)
 
-
-# ------------------------------------------------------------------ #
 # B) Ganadores en las mismas fechas (+ prueba pareada vs el modelo de referencia)
-# ------------------------------------------------------------------ #
 def tabla_b(modelos):
     fechas = None
     for m in modelos.values():
@@ -158,9 +112,7 @@ def tabla_b(modelos):
     return pd.DataFrame(filas), fechas
 
 
-# ------------------------------------------------------------------ #
 # C) Misma configuración en todos los modelos
-# ------------------------------------------------------------------ #
 def tabla_c(modelos):
     def pivote(col):
         d = {}
@@ -188,10 +140,7 @@ def tabla_c(modelos):
     resumen.index.name = "modelo"
     return detalle, resumen, ratio
 
-
-# ------------------------------------------------------------------ #
 # D) Efectos principales del diseño 2x2
-# ------------------------------------------------------------------ #
 def tabla_d(modelos):
     if not all(k in modelos for k in (1, 2, 3, 4)):
         print("  (la comparación D necesita los 4 modelos; se omite)")
@@ -274,7 +223,7 @@ def main():
         print("\n" + "=" * 90 + "\nD) Efectos principales del diseño 2x2 (promedio de la rejilla)\n" + "=" * 90)
         print(D.round(4).to_string(index=False))
 
-    # ---- guardar ----
+    # Guardado de resultados
     A.to_csv(SALIDA / "A_ganadores.csv", index=False)
     if not B.empty:
         B.to_csv(SALIDA / "B_ganadores_mismas_fechas.csv", index=False)

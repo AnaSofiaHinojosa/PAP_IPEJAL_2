@@ -1,23 +1,3 @@
-"""
-generar_matriz_sin_restriccion.py - MODELO 2: matriz de exposiciones
-SIN la restricción sum(beta) = 1.
-
-Es el equivalente de generar_matriz.py, pero las betas se
-estiman con MCO normal, sin forzar que sumen 1.
-
-Todo lo demás se toma de generar_matriz.py (factores, FACTOR_BASE, MIN_OBS,
-ESTANDARIZAR, ESTANDARIZAR_Y, ENTRENAR_CON_HISTORIAL, VENTANA_MESES...)
-
-Lee (igual que el modelo 1):
-    salidas/regresion/rendimientos.csv  (o rendimientos_miembros.csv)
-    salidas/regresion/factores.csv
-
-Escribe en salidas/exposiciones_sin_restriccion/  (NO toca salidas/exposiciones/):
-    matriz_exposiciones.csv
-    matriz_exposiciones.xlsx
-    factores_estandarizacion.csv   (lo necesita generar_rendimientos_sin_restriccion.py)
-"""
-
 from pathlib import Path
 import pandas as pd
 

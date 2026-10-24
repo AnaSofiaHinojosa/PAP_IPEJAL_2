@@ -1,25 +1,3 @@
-"""
-generar_matriz_sin_restriccion_sin_estandarizar.py - MODELO 4, matriz
-de exposiciones sin la restricción sum(beta)=1 y con los factores sin
-estandarizar.
-
-Combina el modelo 2 y el modelo 3:
-    RESTRINGIR_SUMA = False  -> MCO normal, 6 betas libres + alpha
-    ESTANDARIZAR    = False  -> factores crudos (rendimiento mensual del
-                                portafolio largo-corto)
-    ESTANDARIZAR_Y  = False  -> rendimiento en exceso de las acciones crudo
-                                (misma escala que los factores)
-
-Todo lo demás (factores, MIN_OBS, ventana, datos de entrenamiento) se toma de
-generar_matriz.py, la única diferencia con los otros modelos son las
-dos decisiones de arriba.
-
-Como no hay estandarización, no se genera factores_estandarizacion.csv; la
-Parte 3 interpreta esa ausencia como "usar los factores crudos".
-
-Escribe en salidas/exposiciones_sin_restriccion_sin_estandarizar/
-"""
-
 from pathlib import Path
 import pandas as pd
 

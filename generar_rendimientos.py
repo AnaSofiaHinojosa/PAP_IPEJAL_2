@@ -1,34 +1,3 @@
-"""
-generar_rendimientos.py - Parte 3: Rendimiento esperado por acción.
-
-Lee:
-    salidas/exposiciones/matriz_exposiciones.csv   (Parte 2: beta de cada
-                                                     acción a cada factor)
-    salidas/regresion/factores.csv                 (Parte 1: rendimiento
-                                                     mensual de cada factor)
-
-IMPORTANTE (consistencia con la Parte 2): el factor esperado se calcula
-sobre el factor YA estandarizado con la MISMA media/desviación que se usó
-para ajustar los betas (salidas/exposiciones/factores_estandarizacion.csv).
-Si esa estandarización no está disponible (se corrió generar_matriz.py con
-ESTANDARIZAR=False), se usa el factor crudo, para que quede en la misma
-escala (cruda) que usaron esos betas.
-
-Para cada ventana en VENTANAS (3, 6 y 12 meses por defecto):
-    1. Estandariza los factores con media/desv de la Parte 2.
-    2. Calcula el rendimiento esperado de cada factor: rolling mean de los
-       últimos `ventana` meses del factor YA estandarizado, rezagado (ver
-       estimar_rendimiento.py). Ya NO se le saca un segundo z-score al
-       rolling mean.
-    3. Calcula el rendimiento esperado de cada acción:
-           E[R_i,t] = sum_k beta_i,k * factor_esperado_k,t
-
-Escribe en salidas/rendimientos_esperados/:
-    rendimientos_esperados_ventana{3,6,12}.csv   fecha x ticker
-    rendimientos_esperados.xlsx                  una hoja por ventana +
-                                                  hoja de resumen/cobertura
-"""
-
 from pathlib import Path
 import pandas as pd
 

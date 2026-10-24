@@ -1,28 +1,3 @@
-"""
-generar_matriz_sin_estandarizar.py - MODELO 3: matriz de exposiciones
-con los factores sin estandarizar (sin z-score).
-
-Es generar_matriz.py con dos cambios:
-    ESTANDARIZAR   = False  -> los factores entran crudos (rendimiento mensual
-                               del portafolio largo-corto), no (x - media)/desv
-    ESTANDARIZAR_Y = False  -> el rendimiento en exceso de las acciones tampoco
-                               se estandariza, para que ambos lados de la
-                               regresión queden en la misma escala (rendimiento
-                               mensual). Si solo uno se estandariza, con
-                               sum(beta)=1 la regresión queda mal escalada.
-
-La restricción sum(beta) = 1 se mantiene (igual que el modelo 1).
-
-La lógica no se duplica, se reutiliza el main() de generar_matriz.py cambiando
-sus banderas y su carpeta de salida. Todo lo demás (factores, FACTOR_BASE,
-MIN_OBS, ventana, datos de entrenamiento) se toma de generar_matriz.py.
-
-Como no hay estandarización, no se genera factores_estandarizacion.csv; la
-Parte 3 interpreta esa ausencia como "usar los factores crudos".
-
-Escribe en salidas/exposiciones_sin_estandarizar/  (NO toca salidas/exposiciones/)
-"""
-
 from pathlib import Path
 
 import generar_matriz as gm

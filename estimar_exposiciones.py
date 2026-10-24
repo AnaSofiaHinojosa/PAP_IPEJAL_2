@@ -1,33 +1,3 @@
-"""
-estimar_exposiciones.py - Parte 2 (Matriz de exposiciones).
-
-Estima, para cada acción, su exposición (beta) a cada factor mediante una
-regresión de su rendimiento en exceso de rf contra los factores, imponiendo
-
-        sum_k beta_k = valor_restriccion   (por defecto 1)
-
-ESTANDARIZACIÓN (indicación del profesor: "por factor, no por observación")
-  Cada factor se estandariza UNA SOLA VEZ con la media y la desviación
-  estándar de toda su serie de tiempo (factores.csv):
-        z_k,t = (f_k,t - media_k) / desv_k
-  Todas las acciones se regresan contra los MISMOS factores estandarizados,
-  así que los betas son comparables entre acciones (unidades: por desviación
-  estándar del factor). rf no es un factor y no se estandariza.
-  El rendimiento de las acciones se usa en exceso de rf, sin estandarizar
-  (opcional: estandarizar_y=True usa la media y desviación de todos los
-  rendimientos en exceso juntos).
-
-CÓMO SE IMPONE LA RESTRICCIÓN (exacto, sin optimización numérica)
-  beta_base = valor_restriccion - sum(beta_k, k != base), y se sustituye:
-      y - valor_restriccion * X_base
-          = alpha + sum_{k!=base} beta_k * (X_k - X_base) + e
-  que es un MCO normal sobre variables transformadas.
-
-Si restringir_suma=False, se corre MCO normal (sin restricción).
-
-Requiere: numpy, pandas
-"""
-
 import numpy as np
 import pandas as pd
 
