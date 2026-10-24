@@ -5,7 +5,8 @@ import generar_rendimientos as gr
 BASE = Path("salidas/exposiciones_sin_restriccion_sin_estandarizar")
 EXPOSICIONES = BASE / "matriz_exposiciones.csv"
 ESTANDARIZACION = BASE / "factores_estandarizacion.csv"     # no debe existir
-SALIDA = Path("salidas/rendimientos_esperados_sin_restriccion_sin_estandarizar")
+SALIDA = Path(
+    "salidas/rendimientos_esperados_sin_restriccion_sin_estandarizar")
 
 
 def main():

@@ -10,16 +10,24 @@ REGRESION = Path("salidas/regresion")
 SALIDA = Path("salidas/backtesting")
 
 FACTORES = FACTORES_DEFAULT
-VENTANAS_BETA = [None, 36, 60, 120]     # None = histórico completo; resto en meses
-MIN_OBS_GRID = [12, 18, 24]             # mínimo de meses para poder estimar una acción
-VENTANAS_FACTOR = [3, 6, 12]            # ventana del rolling mean del factor esperado (Parte 3)
-FRECUENCIA_REESTIMACION = FRECUENCIA_DEFAULT  # cada cuántos meses se recalculan los betas
+# None = histórico completo; resto en meses
+VENTANAS_BETA = [None, 36, 60, 120]
+# mínimo de meses para poder estimar una acción
+MIN_OBS_GRID = [12, 18, 24]
+# ventana del rolling mean del factor esperado (Parte 3)
+VENTANAS_FACTOR = [3, 6, 12]
+# cada cuántos meses se recalculan los betas
+FRECUENCIA_REESTIMACION = FRECUENCIA_DEFAULT
 REZAGO_FACTOR = 1                       # evita look-ahead en el factor esperado
-ESTANDARIZAR = True                     # estandarizar factores en cada corte (consistente con la Parte 2)
-ESTANDARIZAR_Y = True                   # estandarizar también el rendimiento en exceso en cada corte
-                                        # (z-score global, solo con datos hasta el corte; igual que la Parte 2)
-MIN_ACCIONES_IC = 10                    # mínimo de acciones con dato para calcular IC ese mes
-MIN_PERIODOS = 24                       # meses mínimos de IC para que un modelo entre a la comparación
+# estandarizar factores en cada corte (consistente con la Parte 2)
+ESTANDARIZAR = True
+# estandarizar también el rendimiento en exceso en cada corte
+ESTANDARIZAR_Y = True
+# (z-score global, solo con datos hasta el corte; igual que la Parte 2)
+# mínimo de acciones con dato para calcular IC ese mes
+MIN_ACCIONES_IC = 10
+# meses mínimos de IC para que un modelo entre a la comparación
+MIN_PERIODOS = 24
 # True  = los betas se estiman con el historial completo de precios de cada empresa
 #         (rendimientos.csv), aunque todavía no estuviera en el Top 100.
 #         Resuelve las empresas recién entradas (revisar_cobertura_minobs.py).
@@ -75,7 +83,8 @@ def main():
     SALIDA.mkdir(parents=True, exist_ok=True)
 
     print("Leyendo rendimientos y factores...")
-    rendimientos_miembros = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
+    rendimientos_miembros = cargar_rendimientos(
+        REGRESION / "rendimientos_miembros.csv")
     factores_df = cargar_factores(REGRESION / "factores.csv")
     # El rendimiento "real" (ex post) para el IC: solo empresas del Top 100 ese mes
     rendimiento_real = rendimientos_miembros
@@ -86,7 +95,8 @@ def main():
     else:
         rendimientos = rendimientos_miembros
         print("  Betas e IC solo con meses en el Top 100 (rendimientos_miembros.csv)")
-    print(f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
+    print(
+        f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
 
     combinaciones = list(product(VENTANAS_BETA, MIN_OBS_GRID, VENTANAS_FACTOR))
     print(f"\nCorriendo {len(combinaciones)} modelos "
@@ -126,10 +136,12 @@ def main():
               f"n={r['n_periodos']}" if r["n_periodos"] else "sin suficientes periodos")
 
     # ---- Fechas comunes: solo modelos con suficientes meses de IC ---- #
-    series = {m: serie_ic(res["ic_serie"]) for m, res in resultados_por_modelo.items()}
+    series = {m: serie_ic(res["ic_serie"])
+              for m, res in resultados_por_modelo.items()}
     incluidos = [m for m, s in series.items() if len(s) >= MIN_PERIODOS]
     if not incluidos:
-        print(f"\nAVISO: ningún modelo tiene {MIN_PERIODOS}+ meses de IC; se usan todos.")
+        print(
+            f"\nAVISO: ningún modelo tiene {MIN_PERIODOS}+ meses de IC; se usan todos.")
         incluidos = [m for m, s in series.items() if len(s) > 0]
 
     fechas_comunes = series[incluidos[0]].index
@@ -138,30 +150,37 @@ def main():
     fechas_comunes = fechas_comunes.sort_values()
 
     if len(fechas_comunes) == 0:
-        raise RuntimeError("Los modelos no comparten ninguna fecha de IC; revisa la rejilla.")
+        raise RuntimeError(
+            "Los modelos no comparten ninguna fecha de IC; revisa la rejilla.")
     print(f"\nComparando {len(incluidos)} modelos en las MISMAS {len(fechas_comunes)} fechas: "
           f"{fechas_comunes[0]:%Y-%m} a {fechas_comunes[-1]:%Y-%m}")
     if len(fechas_comunes) < MIN_PERIODOS:
-        print(f"AVISO: solo {len(fechas_comunes)} fechas en común (< {MIN_PERIODOS}).")
+        print(
+            f"AVISO: solo {len(fechas_comunes)} fechas en común (< {MIN_PERIODOS}).")
 
     # ---- Métricas sobre fechas comunes ---- #
     filas_resumen = []
     for modelo_id, s in series.items():
         incluido = modelo_id in incluidos
-        metricas = resumir_ic(s.loc[fechas_comunes]) if incluido else resumir_ic(s.iloc[:0])
+        metricas = resumir_ic(s.loc[fechas_comunes]
+                              ) if incluido else resumir_ic(s.iloc[:0])
         filas_resumen.append({
             "modelo_id": modelo_id,
             **parametros[modelo_id],
             **metricas,
-            "n_periodos_propio": len(s),   # meses de IC que el modelo tenía por sí solo
+            # meses de IC que el modelo tenía por sí solo
+            "n_periodos_propio": len(s),
             "incluido_en_comparacion": incluido,
         })
     comparacion = pd.DataFrame(filas_resumen)
 
     # ---- Ranking promedio ---- #
-    comparacion["rank_ic_medio"] = comparacion["ic_medio"].rank(ascending=False, method="min")
-    comparacion["rank_ic_std"] = comparacion["ic_std"].rank(ascending=True, method="min")
-    comparacion["rank_ic_ratio"] = comparacion["ic_ratio"].rank(ascending=False, method="min")
+    comparacion["rank_ic_medio"] = comparacion["ic_medio"].rank(
+        ascending=False, method="min")
+    comparacion["rank_ic_std"] = comparacion["ic_std"].rank(
+        ascending=True, method="min")
+    comparacion["rank_ic_ratio"] = comparacion["ic_ratio"].rank(
+        ascending=False, method="min")
     comparacion["ranking_promedio"] = comparacion[
         ["rank_ic_medio", "rank_ic_std", "rank_ic_ratio"]].mean(axis=1)
     comparacion = comparacion.sort_values(
@@ -173,7 +192,8 @@ def main():
     ganador = comparacion.iloc[0]
     print(f"\n{'=' * 70}")
     print(f"MODELO GANADOR: {ganador['modelo_id']}")
-    print(f"  Ranking promedio = {ganador['ranking_promedio']:.2f}  <- criterio de selección")
+    print(
+        f"  Ranking promedio = {ganador['ranking_promedio']:.2f}  <- criterio de selección")
     print(f"    lugar IC medio = {ganador['rank_ic_medio']:.0f}")
     print(f"    lugar IC std   = {ganador['rank_ic_std']:.0f}")
     print(f"    lugar IC Ratio = {ganador['rank_ic_ratio']:.0f}")
@@ -187,7 +207,8 @@ def main():
 
     resultado_ganador = resultados_por_modelo[ganador["modelo_id"]]
     resultado_ganador["ic_serie"].to_csv(SALIDA / "mejor_modelo_ic_serie.csv")
-    resultado_ganador["rendimiento_esperado"].to_csv(SALIDA / "mejor_modelo_rendimiento_esperado.csv")
+    resultado_ganador["rendimiento_esperado"].to_csv(
+        SALIDA / "mejor_modelo_rendimiento_esperado.csv")
 
     carpeta_exp = SALIDA / "mejor_modelo_exposiciones"
     carpeta_exp.mkdir(exist_ok=True)
@@ -202,16 +223,20 @@ def main():
         ("t_stat", "ic_medio / (ic_std / sqrt(n)) — significancia estadística del IC"),
         ("hit_rate", "% de meses con IC > 0"),
         ("n_periodos", "Número de meses (fechas comunes a todos los modelos) usados para el IC"),
-        ("n_periodos_propio", "Meses de IC que el modelo tenía por sí solo, antes de alinear fechas"),
-        ("incluido_en_comparacion", f"False si el modelo tenía menos de {MIN_PERIODOS} meses de IC"),
+        ("n_periodos_propio",
+         "Meses de IC que el modelo tenía por sí solo, antes de alinear fechas"),
+        ("incluido_en_comparacion",
+         f"False si el modelo tenía menos de {MIN_PERIODOS} meses de IC"),
         ("rank_ic_medio", "Lugar por IC medio (1 = mayor)"),
         ("rank_ic_std", "Lugar por IC std (1 = menor)"),
         ("rank_ic_ratio", "Lugar por IC Ratio (1 = mayor)"),
-        ("ranking_promedio", "Promedio de los tres lugares — criterio de selección (menor gana)"),
+        ("ranking_promedio",
+         "Promedio de los tres lugares — criterio de selección (menor gana)"),
         ("ventana_beta_meses", "'completo' = histórico completo (expanding); si es un "
                                "número, meses de ventana móvil usados para reestimar betas"),
         ("min_obs", "Mínimo de meses exigidos para estimar el beta de una acción"),
-        ("ventana_factor_meses", "Ventana del rolling mean usado para el factor esperado (Parte 3)"),
+        ("ventana_factor_meses",
+         "Ventana del rolling mean usado para el factor esperado (Parte 3)"),
     ], columns=["concepto", "definición"])
 
     with pd.ExcelWriter(SALIDA / "comparacion_modelos.xlsx", engine="openpyxl") as xw:
@@ -219,6 +244,7 @@ def main():
         definiciones.to_excel(xw, sheet_name="Definiciones", index=False)
 
     print(f"\nResultados completos en {SALIDA}")
+
 
 if __name__ == "__main__":
     main()

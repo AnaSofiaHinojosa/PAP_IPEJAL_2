@@ -34,7 +34,8 @@ FACTORES = [
 
 def cargar_empresas(carpeta: Path) -> dict[str, pd.DataFrame]:
     """{campo: DataFrame fecha x ticker}"""
-    campos = {"precio_ajustado": {}, "pe": {}, "market_cap": {}, "rotacion": {}}
+    campos = {"precio_ajustado": {}, "pe": {},
+              "market_cap": {}, "rotacion": {}}
     for arch in sorted((carpeta / "empresas").glob("*.xlsx")):
         try:
             m = pd.read_excel(arch, sheet_name="Mensual")
@@ -63,7 +64,8 @@ def cargar_membresia(indice: pd.Index, columnas: pd.Index,
     """fecha x ticker, True si la empresa está en el top 100 del año de esa
     fecha. Los tickers se escriben igual que los Excel (BRK.B -> BRK-B)."""
     if not archivo.exists():
-        print(f"  AVISO: no existe {archivo}; se usan TODAS las empresas todos los meses.")
+        print(
+            f"  AVISO: no existe {archivo}; se usan TODAS las empresas todos los meses.")
         return pd.DataFrame(True, index=indice, columns=columnas)
     sel = pd.read_csv(archivo).dropna(subset=["Ticker"])
     sel["col"] = sel["Ticker"].astype(str).str.replace(".", "-", regex=False)
@@ -140,7 +142,8 @@ def main():
           f"máx {n_mes.max()}")
 
     mercado = cargar_mercado(CARPETA)
-    rf = (mercado["tbill_13w"] / 100 / 12).shift(1).reindex(ret.index)   # conocido al inicio del mes
+    # conocido al inicio del mes
+    rf = (mercado["tbill_13w"] / 100 / 12).shift(1).reindex(ret.index)
     ret_sp = mercado["sp500"].pct_change(fill_method=None).reindex(ret.index)
 
     factores = pd.DataFrame(index=ret.index)
@@ -148,7 +151,8 @@ def main():
     factores["MERCADO"] = ret_sp - rf
     pesos = car["market_cap"] if PONDERACION == "market_cap" else None
     for nombre, c, largo in FACTORES:
-        factores[nombre] = factor_long_short(ret, car[c], largo, pesos, miembro)
+        factores[nombre] = factor_long_short(
+            ret, car[c], largo, pesos, miembro)
     for f, base in ORTOGONALIZAR.items():
         par = factores[[f, base]].dropna()
         if len(par) > 24:
@@ -161,24 +165,28 @@ def main():
     factores = factores[factores.index >= FECHA_INICIO]
     ret = ret[ret.index >= FECHA_INICIO]
     miembro = miembro.reindex(ret.index).fillna(False).astype(bool)
-    ret = ret.loc[:, miembro.any()]        # solo empresas que estuvieron en el top 100
+    # solo empresas que estuvieron en el top 100
+    ret = ret.loc[:, miembro.any()]
     miembro = miembro[ret.columns]
     ret_miembros = ret.where(miembro)
 
     # formato largo de características (respaldo / otras especificaciones)
-    car_m = {k: v.reindex(index=ret.index, columns=ret.columns) for k, v in car.items()}
+    car_m = {k: v.reindex(index=ret.index, columns=ret.columns)
+             for k, v in car.items()}
     car_m["miembro"] = miembro.astype(int)
-    largo = pd.concat({k: v.stack(future_stack=True) for k, v in car_m.items()}, axis=1)
+    largo = pd.concat({k: v.stack(future_stack=True)
+                      for k, v in car_m.items()}, axis=1)
     largo.index.names = ["fecha", "ticker"]
     largo = largo.reset_index().dropna(subset=["rendimiento"])
 
-    fmt = lambda df: df.rename_axis("fecha").reset_index().assign(
+    def fmt(df): return df.rename_axis("fecha").reset_index().assign(
         fecha=lambda d: pd.to_datetime(d["fecha"]).dt.date)
     fmt(ret).to_csv(SALIDA / "rendimientos.csv", index=False)
     fmt(ret_miembros).to_csv(SALIDA / "rendimientos_miembros.csv", index=False)
     fmt(miembro.astype(int)).to_csv(SALIDA / "membresia.csv", index=False)
     fmt(factores).to_csv(SALIDA / "factores.csv", index=False)
-    largo.assign(fecha=largo["fecha"].dt.date).to_csv(SALIDA / "caracteristicas.csv", index=False)
+    largo.assign(fecha=largo["fecha"].dt.date).to_csv(
+        SALIDA / "caracteristicas.csv", index=False)
 
     definiciones = pd.DataFrame([
         ("rf", "T-bill 13 semanas (^IRX) / 100 / 12, del cierre del mes anterior"),
@@ -193,16 +201,21 @@ def main():
                      "(seleccion_anual_top100.csv); ver membresia.csv"),
         ("Ventana", f"Desde {FECHA_INICIO[:7]}"),
         ("Ponderación", PONDERACION),
-        ("Ortogonalización", ", ".join(f"{k} vs {v}" for k, v in ORTOGONALIZAR.items()) or "ninguna"),
-        ("Mínimo de empresas", f"{MIN_EMPRESAS} con dato; si no, el factor queda vacío ese mes"),
+        ("Ortogonalización", ", ".join(
+            f"{k} vs {v}" for k, v in ORTOGONALIZAR.items()) or "ninguna"),
+        ("Mínimo de empresas",
+         f"{MIN_EMPRESAS} con dato; si no, el factor queda vacío ese mes"),
         ("rendimientos.csv", "Rendimiento simple mensual con precio ajustado (incluye dividendos), todos los meses"),
-        ("rendimientos_miembros.csv", "Igual, pero vacío en los meses en que la empresa no estaba en el top 100"),
+        ("rendimientos_miembros.csv",
+         "Igual, pero vacío en los meses en que la empresa no estaba en el top 100"),
     ], columns=["concepto", "definición"])
     with pd.ExcelWriter(SALIDA / "insumos_regresion.xlsx", engine="openpyxl") as xw:
         fmt(ret).to_excel(xw, sheet_name="Rendimientos", index=False)
         fmt(factores).to_excel(xw, sheet_name="Factores", index=False)
-        fmt(ret_miembros).to_excel(xw, sheet_name="Rendimientos_miembros", index=False)
-        fmt(miembro.astype(int)).to_excel(xw, sheet_name="Membresia", index=False)
+        fmt(ret_miembros).to_excel(
+            xw, sheet_name="Rendimientos_miembros", index=False)
+        fmt(miembro.astype(int)).to_excel(
+            xw, sheet_name="Membresia", index=False)
         definiciones.to_excel(xw, sheet_name="Definiciones", index=False)
 
     print("\nCobertura de cada factor (primer y último mes con dato):")

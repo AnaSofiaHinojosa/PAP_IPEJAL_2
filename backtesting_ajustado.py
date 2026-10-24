@@ -25,9 +25,12 @@ class Insumos:
         self.estandarizar = estandarizar
         self.restringir_suma = restringir_suma
         self.estandarizar_y = estandarizar_y
-        self.exposiciones = exposiciones            # {corte: matriz de exposiciones}
-        self.estadisticas = estadisticas            # {corte: media/desv de los factores o None}
-        self.fe_por_corte = fe_por_corte            # {corte: fecha x factor esperado}
+        # {corte: matriz de exposiciones}
+        self.exposiciones = exposiciones
+        # {corte: media/desv de los factores o None}
+        self.estadisticas = estadisticas
+        # {corte: fecha x factor esperado}
+        self.fe_por_corte = fe_por_corte
         self.cortes = sorted(exposiciones.keys())
         self._errores = None
 
@@ -71,7 +74,8 @@ def construir_insumos(
 ) -> Insumos:
     """Betas por corte (walk-forward) y factor esperado por corte para UN modelo
     (una configuración de ventana de beta, min_obs y ventana de factor)."""
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     exposiciones, estadisticas = construir_exposiciones_rolling(
         rendimientos, factores_df, factores=factores, ventana_beta=ventana_beta,
         min_obs=min_obs, frecuencia_meses=frecuencia_meses, estandarizar=estandarizar,
@@ -101,7 +105,8 @@ def rendimiento_esperado(
     betas_src = betas_por_corte if betas_por_corte is not None else ins.exposiciones
     filas = {}
     for fecha in ins.factores_df.index:
-        corte = _beta_aplicable(fecha, ins.cortes)        # corte estrictamente anterior
+        # corte estrictamente anterior
+        corte = _beta_aplicable(fecha, ins.cortes)
         if corte is None:
             continue
         fe = ins.fe_por_corte[corte].loc[fecha, ins.factores]
@@ -110,7 +115,8 @@ def rendimiento_esperado(
         if pesos is not None:
             fe = fe * pesos.loc[fecha, ins.factores]
         betas = betas_src[corte][ins.factores]
-        filas[fecha] = pd.Series(betas.to_numpy() @ fe.to_numpy(), index=betas.index)
+        filas[fecha] = pd.Series(
+            betas.to_numpy() @ fe.to_numpy(), index=betas.index)
     if not filas:
         return pd.DataFrame()
     return pd.DataFrame(filas).T.sort_index()

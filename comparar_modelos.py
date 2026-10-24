@@ -6,13 +6,18 @@ from optimizar_modelos import resumir_ic, serie_ic
 
 MODELOS = [
     (1, "Modelo 1: estandarizado, sum(beta)=1", Path("salidas/backtesting")),
-    (2, "Modelo 2: estandarizado, betas libres", Path("salidas/backtesting_sin_restriccion")),
-    (3, "Modelo 3: sin estandarizar, sum(beta)=1", Path("salidas/backtesting_sin_estandarizar")),
-    (4, "Modelo 4: sin estandarizar, betas libres", Path("salidas/backtesting_sin_restriccion_sin_estandarizar")),
+    (2, "Modelo 2: estandarizado, betas libres",
+     Path("salidas/backtesting_sin_restriccion")),
+    (3, "Modelo 3: sin estandarizar, sum(beta)=1",
+     Path("salidas/backtesting_sin_estandarizar")),
+    (4, "Modelo 4: sin estandarizar, betas libres", Path(
+        "salidas/backtesting_sin_restriccion_sin_estandarizar")),
 ]
-REFERENCIA = 1                                  # modelo contra el que se prueban diferencias
+# modelo contra el que se prueban diferencias
+REFERENCIA = 1
 SALIDA = Path("salidas/comparacion_modelos")
-COLUMNAS_METRICAS = ["ic_medio", "ic_std", "ic_ratio", "t_stat", "hit_rate", "n_periodos"]
+COLUMNAS_METRICAS = ["ic_medio", "ic_std",
+                     "ic_ratio", "t_stat", "hit_rate", "n_periodos"]
 
 
 RANKS = [("rank_ic_medio", "ic_medio", False),
@@ -50,7 +55,8 @@ def _normalizar_comp(comp: pd.DataFrame, nombre: str) -> pd.DataFrame:
     for rank_col, metrica, ascendente in RANKS:
         if rank_col not in comp.columns:
             comp[rank_col] = np.nan
-            comp.loc[inc, rank_col] = comp.loc[inc, metrica].rank(ascending=ascendente, method="min")
+            comp.loc[inc, rank_col] = comp.loc[inc, metrica].rank(
+                ascending=ascendente, method="min")
             reconstruidas.append(rank_col)
     if "ranking_promedio" not in comp.columns:
         comp["ranking_promedio"] = comp[[r for r, _, _ in RANKS]].mean(axis=1)
@@ -67,14 +73,16 @@ def cargar_modelos():
     """{k: dict(nombre, comp, serie, ganador)} solo de los modelos con salidas."""
     cargados = {}
     for k, nombre, carpeta in MODELOS:
-        f_comp, f_ic = carpeta / "comparacion_modelos.csv", carpeta / "mejor_modelo_ic_serie.csv"
+        f_comp, f_ic = carpeta / "comparacion_modelos.csv", carpeta / \
+            "mejor_modelo_ic_serie.csv"
         if not (f_comp.exists() and f_ic.exists()):
             print(f"  AVISO: {nombre} omitido (faltan archivos en {carpeta}/)")
             continue
         comp = _normalizar_comp(pd.read_csv(f_comp), nombre)
         serie = serie_ic(pd.read_csv(f_ic, index_col=0, parse_dates=True))
         cargados[k] = {"nombre": nombre, "comp": comp, "serie": serie.sort_index(),
-                       "ganador": comp.iloc[0]}      # comparacion_modelos.csv viene ordenado: fila 0 = ganador
+                       # comparacion_modelos.csv viene ordenado: fila 0 = ganador
+                       "ganador": comp.iloc[0]}
     return cargados
 
 
@@ -89,13 +97,17 @@ def tabla_a(modelos):
     return pd.DataFrame(filas)
 
 # B) Ganadores en las mismas fechas (+ prueba pareada vs el modelo de referencia)
+
+
 def tabla_b(modelos):
     fechas = None
     for m in modelos.values():
-        fechas = m["serie"].index if fechas is None else fechas.intersection(m["serie"].index)
+        fechas = m["serie"].index if fechas is None else fechas.intersection(
+            m["serie"].index)
     fechas = fechas.sort_values()
     if len(fechas) < 2:
-        print("  AVISO: los ganadores no comparten fechas de IC; se omite la comparación B.")
+        print(
+            "  AVISO: los ganadores no comparten fechas de IC; se omite la comparación B.")
         return pd.DataFrame(), fechas
     ref = modelos[REFERENCIA]["serie"].loc[fechas] if REFERENCIA in modelos else None
     filas = []
@@ -107,7 +119,8 @@ def tabla_b(modelos):
             d = s - ref
             sd = d.std()
             fila["dif_ic_vs_modelo_ref"] = d.mean()
-            fila["t_stat_dif"] = d.mean() / (sd / np.sqrt(len(d))) if sd > 0 else np.nan
+            fila["t_stat_dif"] = d.mean() / (sd / np.sqrt(len(d))
+                                             ) if sd > 0 else np.nan
         filas.append(fila)
     return pd.DataFrame(filas), fechas
 
@@ -118,18 +131,22 @@ def tabla_c(modelos):
         d = {}
         for k, m in modelos.items():
             c = m["comp"]
-            c = c[c["incluido_en_comparacion"].astype(bool)].set_index("modelo_id")[col]
+            c = c[c["incluido_en_comparacion"].astype(
+                bool)].set_index("modelo_id")[col]
             d[f"M{k}"] = c
-        return pd.DataFrame(d).dropna()      # solo configuraciones presentes en todos
+        # solo configuraciones presentes en todos
+        return pd.DataFrame(d).dropna()
 
     ratio, medio = pivote("ic_ratio"), pivote("ic_medio")
     if ratio.empty:
         return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-    detalle = pd.concat({"ic_ratio": ratio, "ic_medio": medio.reindex(ratio.index)}, axis=1)
+    detalle = pd.concat(
+        {"ic_ratio": ratio, "ic_medio": medio.reindex(ratio.index)}, axis=1)
     detalle.columns = [f"{a}_{b}" for a, b in detalle.columns]
     detalle.index.name = "configuracion"
 
-    mejores = ratio.idxmax(axis=1).value_counts().reindex(ratio.columns).fillna(0).astype(int)
+    mejores = ratio.idxmax(axis=1).value_counts().reindex(
+        ratio.columns).fillna(0).astype(int)
     resumen = pd.DataFrame({
         "n_configuraciones": len(ratio),
         "ic_ratio_medio_rejilla": ratio.mean(),
@@ -141,6 +158,8 @@ def tabla_c(modelos):
     return detalle, resumen, ratio
 
 # D) Efectos principales del diseño 2x2
+
+
 def tabla_d(modelos):
     if not all(k in modelos for k in (1, 2, 3, 4)):
         print("  (la comparación D necesita los 4 modelos; se omite)")
@@ -150,7 +169,8 @@ def tabla_d(modelos):
         v = {}
         for k in (1, 2, 3, 4):
             c = modelos[k]["comp"]
-            c = c[c["incluido_en_comparacion"].astype(bool)].set_index("modelo_id")[col]
+            c = c[c["incluido_en_comparacion"].astype(
+                bool)].set_index("modelo_id")[col]
             v[k] = c
         v = pd.DataFrame(v).dropna()
         if v.empty:
@@ -178,7 +198,8 @@ def grafico_ic_acumulado(modelos, fechas, ruta):
     for k, m in modelos.items():
         ax.plot(fechas, m["serie"].loc[fechas].cumsum(), label=m["nombre"])
     ax.axhline(0, color="gray", lw=0.8)
-    ax.set_title("IC acumulado del modelo ganador de cada versión (mismas fechas)")
+    ax.set_title(
+        "IC acumulado del modelo ganador de cada versión (mismas fechas)")
     ax.set_ylabel("suma acumulada del IC mensual")
     ax.legend(fontsize=8)
     fig.tight_layout()
@@ -191,11 +212,13 @@ def main():
     print("Cargando resultados de los modelos...")
     modelos = cargar_modelos()
     if len(modelos) < 2:
-        raise RuntimeError("Se necesitan al menos 2 modelos con salidas para comparar.")
+        raise RuntimeError(
+            "Se necesitan al menos 2 modelos con salidas para comparar.")
     print(f"  {len(modelos)} modelos: " + ", ".join(f"M{k}" for k in modelos))
 
     # aviso si un mismo modelo_id tiene distinto n_periodos entre versiones
-    n = pd.DataFrame({f"M{k}": m["comp"].set_index("modelo_id")["n_periodos"] for k, m in modelos.items()})
+    n = pd.DataFrame({f"M{k}": m["comp"].set_index("modelo_id")[
+                     "n_periodos"] for k, m in modelos.items()})
     if (n.nunique(axis=1) > 1).any():
         print("  AVISO: el número de periodos de IC no es igual en todos los modelos "
               "(las fechas comunes difieren); la comparación C usa las fechas de cada backtest.")
@@ -208,7 +231,8 @@ def main():
     pd.set_option("display.width", 220)
     pd.set_option("display.max_columns", 30)
     pd.set_option("display.max_colwidth", 45)
-    print("\n" + "=" * 90 + "\nA) Ganador de cada modelo (su propio periodo)\n" + "=" * 90)
+    print("\n" + "=" * 90 +
+          "\nA) Ganador de cada modelo (su propio periodo)\n" + "=" * 90)
     print(A.round(4).to_string(index=False))
     if not B.empty:
         print("\n" + "=" * 90 + f"\nB) Ganadores en las MISMAS {len(fechas)} fechas "
@@ -217,10 +241,12 @@ def main():
         print(f"   (dif_ic y t_stat_dif: diferencia mensual de IC vs {REFERENCIA and 'Modelo ' + str(REFERENCIA)}; "
               "|t| > 2 sugiere diferencia real)")
     if not C_res.empty:
-        print("\n" + "=" * 90 + "\nC) Misma configuración en los modelos (resumen de la rejilla)\n" + "=" * 90)
+        print("\n" + "=" * 90 +
+              "\nC) Misma configuración en los modelos (resumen de la rejilla)\n" + "=" * 90)
         print(C_res.round(4).to_string())
     if not D.empty:
-        print("\n" + "=" * 90 + "\nD) Efectos principales del diseño 2x2 (promedio de la rejilla)\n" + "=" * 90)
+        print("\n" + "=" * 90 +
+              "\nD) Efectos principales del diseño 2x2 (promedio de la rejilla)\n" + "=" * 90)
         print(D.round(4).to_string(index=False))
 
     # Guardado de resultados
@@ -241,13 +267,15 @@ def main():
         ("A_ganadores", "Mejor configuración de cada modelo, con las métricas de su propio backtest"),
         ("B_mismas_fechas", "Los ganadores evaluados en la intersección de sus fechas de IC; "
                             "dif_ic_vs_modelo_ref y t_stat_dif = diferencia mensual de IC contra el modelo de referencia (prueba pareada)"),
-        ("C_misma_configuracion", "IC Ratio e IC medio de cada una de las configuraciones de la rejilla en cada modelo"),
+        ("C_misma_configuracion",
+         "IC Ratio e IC medio de cada una de las configuraciones de la rejilla en cada modelo"),
         ("C_resumen_rejilla", "Promedio/mediana sobre toda la rejilla y # de configuraciones donde cada modelo es el mejor por IC Ratio. "
                               "Menos sesgado por selección que comparar solo a los ganadores"),
         ("D_efectos_2x2", "efecto_quitar_restriccion = promedio de (M2-M1) y (M4-M3); "
                           "efecto_no_estandarizar = promedio de (M3-M1) y (M4-M2); "
                           "interaccion = (M4-M3) - (M2-M1)"),
-        ("ic_medio / ic_std / ic_ratio / t_stat / hit_rate", "Ver definiciones de optimizar_modelos.py"),
+        ("ic_medio / ic_std / ic_ratio / t_stat / hit_rate",
+         "Ver definiciones de optimizar_modelos.py"),
     ], columns=["concepto", "definición"])
     with pd.ExcelWriter(SALIDA / "comparar_modelos.xlsx", engine="openpyxl") as xw:
         A.to_excel(xw, sheet_name="A_ganadores", index=False)

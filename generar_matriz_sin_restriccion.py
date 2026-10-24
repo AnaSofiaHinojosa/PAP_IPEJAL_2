@@ -18,21 +18,24 @@ def main():
     print(f"  rendimientos de: {archivo_rend}")
     rendimientos = gm.cargar_rendimientos(gm.REGRESION / archivo_rend)
     factores_df = gm.cargar_factores(gm.REGRESION / "factores.csv")
-    print(f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
+    print(
+        f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
 
     faltan = [f for f in gm.FACTORES if f not in factores_df.columns]
     if faltan:
         raise ValueError(f"Faltan factores en factores.csv: {faltan}")
 
-    rendimientos, factores_df = gm.recortar_ventana(rendimientos, factores_df, gm.VENTANA_MESES)
+    rendimientos, factores_df = gm.recortar_ventana(
+        rendimientos, factores_df, gm.VENTANA_MESES)
 
-    print(f"  estandarizar factores = {gm.ESTANDARIZAR}, estandarizar rendimientos = {gm.ESTANDARIZAR_Y}")
+    print(
+        f"  estandarizar factores = {gm.ESTANDARIZAR}, estandarizar rendimientos = {gm.ESTANDARIZAR_Y}")
     print("\nEstimando exposiciones (MCO sin restricción de suma)...")
     matriz = estimar_matriz_exposiciones(
         rendimientos=rendimientos,
         factores_df=factores_df,
         factores=gm.FACTORES,
-        factor_base=gm.FACTOR_BASE,          # no se usa 
+        factor_base=gm.FACTOR_BASE,          # no se usa
         restringir_suma=RESTRINGIR_SUMA,
         valor_restriccion=gm.VALOR_RESTRICCION,
         min_obs=gm.MIN_OBS,
@@ -65,10 +68,11 @@ def main():
 
     matriz.to_csv(SALIDA / "matriz_exposiciones.csv")
 
-    # media/desviación de estandarización: para Parte 3 
+    # media/desviación de estandarización: para Parte 3
     estandarizacion = matriz.attrs.get("estandarizacion")
     if estandarizacion is not None:
-        estandarizacion.rename_axis("factor").to_csv(SALIDA / "factores_estandarizacion.csv")
+        estandarizacion.rename_axis("factor").to_csv(
+            SALIDA / "factores_estandarizacion.csv")
         print(f"  medias/desviaciones de estandarización guardadas en "
               f"{SALIDA / 'factores_estandarizacion.csv'}")
 
@@ -80,10 +84,10 @@ def main():
         ("Ventana", "Todo el historial disponible" if not gm.VENTANA_MESES
                     else f"Últimos {gm.VENTANA_MESES} meses"),
         ("Mínimo de observaciones", f"{gm.MIN_OBS} meses con dato simultáneo en "
-                                    "la acción y en todos los factores"),
+         "la acción y en todos los factores"),
         ("Estandarización", ("Factores: z-score de cada factor con toda su serie. " if gm.ESTANDARIZAR else "Factores sin estandarizar. ")
-                            + ("Rendimientos en exceso: z-score global" if gm.ESTANDARIZAR_Y
-                               else "Rendimientos en exceso sin estandarizar")),
+         + ("Rendimientos en exceso: z-score global" if gm.ESTANDARIZAR_Y
+            else "Rendimientos en exceso sin estandarizar")),
         ("Datos de entrenamiento", "Todo el historial de precios de cada empresa (rendimientos.csv)"
                                    if gm.ENTRENAR_CON_HISTORIAL else
                                    "Solo meses en el Top 100 (rendimientos_miembros.csv)"),

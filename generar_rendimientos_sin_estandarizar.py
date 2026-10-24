@@ -1,8 +1,10 @@
 from pathlib import Path
 import generar_rendimientos as gr
 
-EXPOSICIONES = Path("salidas/exposiciones_sin_estandarizar/matriz_exposiciones.csv")
-ESTANDARIZACION = Path("salidas/exposiciones_sin_estandarizar/factores_estandarizacion.csv")  # no debe existir
+EXPOSICIONES = Path(
+    "salidas/exposiciones_sin_estandarizar/matriz_exposiciones.csv")
+ESTANDARIZACION = Path(
+    "salidas/exposiciones_sin_estandarizar/factores_estandarizacion.csv")  # no debe existir
 SALIDA = Path("salidas/rendimientos_esperados_sin_estandarizar")
 
 

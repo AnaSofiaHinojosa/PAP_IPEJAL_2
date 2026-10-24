@@ -74,7 +74,8 @@ class YahooFactorDataFetcher:
         resultados = {}
         for ticker in self.tickers:
             try:
-                data = _descargar_mensual(ticker, self.fecha_inicio, self.fecha_fin)
+                data = _descargar_mensual(
+                    ticker, self.fecha_inicio, self.fecha_fin)
                 try:
                     self.splits[ticker] = _descargar_splits(ticker)
                 except Exception:
@@ -87,11 +88,13 @@ class YahooFactorDataFetcher:
                 df["volumen"] = data["Volume"]
 
                 self.precios[ticker] = df
-                resultados[ticker] = ResultadoDescarga(ticker, ok=True, datos=df)
+                resultados[ticker] = ResultadoDescarga(
+                    ticker, ok=True, datos=df)
 
             except Exception as e:
                 self.errores[ticker] = str(e)
-                resultados[ticker] = ResultadoDescarga(ticker, ok=False, error=str(e))
+                resultados[ticker] = ResultadoDescarga(
+                    ticker, ok=False, error=str(e))
 
         return resultados
 
@@ -102,13 +105,16 @@ class YahooFactorDataFetcher:
         resultados, columnas = {}, []
         for simbolo, nombre in series.items():
             try:
-                data = _descargar_mensual(simbolo, self.fecha_inicio, self.fecha_fin)
+                data = _descargar_mensual(
+                    simbolo, self.fecha_inicio, self.fecha_fin)
                 serie = data["Close"].rename(nombre)
                 columnas.append(serie)
-                resultados[simbolo] = ResultadoDescarga(simbolo, ok=True, datos=serie.to_frame())
+                resultados[simbolo] = ResultadoDescarga(
+                    simbolo, ok=True, datos=serie.to_frame())
             except Exception as e:
                 self.errores[simbolo] = str(e)
-                resultados[simbolo] = ResultadoDescarga(simbolo, ok=False, error=str(e))
+                resultados[simbolo] = ResultadoDescarga(
+                    simbolo, ok=False, error=str(e))
 
         if columnas:
             self.mercado = pd.concat(columnas, axis=1)
@@ -123,7 +129,8 @@ class YahooFactorDataFetcher:
         for ticker in self.precios:
             try:
                 est = yf.Ticker(ticker).quarterly_income_stmt
-                fila = next((f for f in ("Diluted EPS", "Basic EPS") if f in est.index), None)
+                fila = next(
+                    (f for f in ("Diluted EPS", "Basic EPS") if f in est.index), None)
                 if fila is not None:
                     s = est.loc[fila].dropna()
                     s.index = pd.to_datetime(s.index)

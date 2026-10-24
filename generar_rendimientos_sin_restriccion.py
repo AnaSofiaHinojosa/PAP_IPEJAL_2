@@ -2,8 +2,10 @@ from pathlib import Path
 
 import generar_rendimientos as gr
 
-EXPOSICIONES = Path("salidas/exposiciones_sin_restriccion/matriz_exposiciones.csv")
-ESTANDARIZACION = Path("salidas/exposiciones_sin_restriccion/factores_estandarizacion.csv")
+EXPOSICIONES = Path(
+    "salidas/exposiciones_sin_restriccion/matriz_exposiciones.csv")
+ESTANDARIZACION = Path(
+    "salidas/exposiciones_sin_restriccion/factores_estandarizacion.csv")
 SALIDA = Path("salidas/rendimientos_esperados_sin_restriccion")
 
 

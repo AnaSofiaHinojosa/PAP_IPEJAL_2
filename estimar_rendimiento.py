@@ -21,7 +21,8 @@ def aplicar_estandarizacion(
     regresa los factores tal cual (sin transformar) — así el factor esperado
     queda en la misma escala (cruda) que usaron los betas en ese caso.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     f = factores_df[factores]
     if stats is None:
         return f
@@ -41,7 +42,8 @@ def calcular_factor_esperado(
     últimos `ventana` meses del factor YA estandarizado, rezagado `rezago`
     meses. (Ya NO se estandariza otra vez aquí — ver docstring del módulo.)
     """
-    promedio_movil = factor_estandarizado.rolling(window=ventana, min_periods=ventana).mean()
+    promedio_movil = factor_estandarizado.rolling(
+        window=ventana, min_periods=ventana).mean()
     if rezago:
         promedio_movil = promedio_movil.shift(rezago)
     return promedio_movil
@@ -58,9 +60,11 @@ def calcular_matriz_factores_esperados(
     aplicar_estandarizacion). Regresa un DataFrame fecha x factor con el
     rendimiento esperado de cada factor en cada mes.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     columnas = {
-        f: calcular_factor_esperado(factores_estandarizados[f], ventana=ventana, rezago=rezago)
+        f: calcular_factor_esperado(
+            factores_estandarizados[f], ventana=ventana, rezago=rezago)
         for f in factores
     }
     return pd.DataFrame(columnas, index=factores_estandarizados.index)
@@ -99,7 +103,8 @@ def calcular_rendimiento_esperado(
     en cada mes. Queda NaN donde no hay suficiente historia (arranque del
     rolling mean) o donde la acción no tiene beta estimado en la Parte 2.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
 
     betas = matriz_exposiciones[factores]                    # ticker x factor
     fe = factores_esperados[factores]                         # fecha x factor

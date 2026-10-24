@@ -16,20 +16,27 @@ REGRESION = Path("salidas/regresion")
 SALIDA = Path("salidas/exposiciones")
 
 # Parámetros ajustables por el equipo
-FACTORES = FACTORES_DEFAULT              # MERCADO, VALUE, TAMANO, MOMENTUM, VOLATILIDAD, LIQUIDEZ
-FACTOR_BASE = FACTOR_BASE_DEFAULT         # factor que se despeja de la restricción de suma
+# MERCADO, VALUE, TAMANO, MOMENTUM, VOLATILIDAD, LIQUIDEZ
+FACTORES = FACTORES_DEFAULT
+# factor que se despeja de la restricción de suma
+FACTOR_BASE = FACTOR_BASE_DEFAULT
 RESTRINGIR_SUMA = True                    # sum(beta) = VALOR_RESTRICCION
 VALOR_RESTRICCION = VALOR_RESTRICCION_DEFAULT
-MIN_OBS = MIN_OBS_DEFAULT                 # mínimo de meses en común para estimar una empresa
-VENTANA_MESES = None                      # None = usa todo el historial disponible (20 años);
-                                           # o un entero, ej. 120, para usar solo los últimos N meses
-R2_AVISO = 0.10                           # avisa si el R^2 de una empresa es menor a esto
-ESTANDARIZAR = ESTANDARIZAR_FACTORES_DEFAULT   # z-score por factor (toda su serie)
-ESTANDARIZAR_Y = True                          # z-score global del exceso de rendimiento
-                                               # (una sola media/desv para TODAS las acciones).
-                                               # Necesario con factores estandarizados + sum(beta)=1:
-                                               # así ambos lados de la regresión quedan en
-                                               # desviaciones estándar (si no, R^2 ~ -14).
+# mínimo de meses en común para estimar una empresa
+MIN_OBS = MIN_OBS_DEFAULT
+# None = usa todo el historial disponible (20 años);
+VENTANA_MESES = None
+# o un entero, ej. 120, para usar solo los últimos N meses
+# avisa si el R^2 de una empresa es menor a esto
+R2_AVISO = 0.10
+# z-score por factor (toda su serie)
+ESTANDARIZAR = ESTANDARIZAR_FACTORES_DEFAULT
+# z-score global del exceso de rendimiento
+ESTANDARIZAR_Y = True
+# (una sola media/desv para TODAS las acciones).
+# Necesario con factores estandarizados + sum(beta)=1:
+# así ambos lados de la regresión quedan en
+# desviaciones estándar (si no, R^2 ~ -14).
 # True  = cada empresa se estima con TODO su historial de precios (rendimientos.csv),
 #         aunque todavía no estuviera en el Top 100 (mismo criterio que optimizar_modelos.py).
 # False = solo con los meses en que estuvo en el Top 100 (rendimientos_miembros.csv), como antes.
@@ -65,7 +72,7 @@ def recortar_ventana(rendimientos: pd.DataFrame, factores_df: pd.DataFrame,
     fechas = rendimientos.index.union(factores_df.index).sort_values()
     corte = fechas[-meses:] if len(fechas) > meses else fechas
     return rendimientos.loc[rendimientos.index.isin(corte)], \
-           factores_df.loc[factores_df.index.isin(corte)]
+        factores_df.loc[factores_df.index.isin(corte)]
 
 
 def main():
@@ -76,16 +83,19 @@ def main():
     print(f"  rendimientos de: {archivo_rend}")
     rendimientos = cargar_rendimientos(REGRESION / archivo_rend)
     factores_df = cargar_factores(REGRESION / "factores.csv")
-    print(f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
+    print(
+        f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
     print(f"  factores disponibles: {', '.join(factores_df.columns)}")
 
     faltan = [f for f in FACTORES if f not in factores_df.columns]
     if faltan:
         raise ValueError(f"Faltan factores en factores.csv: {faltan}")
 
-    rendimientos, factores_df = recortar_ventana(rendimientos, factores_df, VENTANA_MESES)
+    rendimientos, factores_df = recortar_ventana(
+        rendimientos, factores_df, VENTANA_MESES)
 
-    print(f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
+    print(
+        f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
     print(f"\nEstimando exposiciones (restricción sum(beta)={VALOR_RESTRICCION}: "
           f"{'activada' if RESTRINGIR_SUMA else 'desactivada'}, factor base = {FACTOR_BASE})...")
     matriz = estimar_matriz_exposiciones(
@@ -124,7 +134,8 @@ def main():
     # para que el factor esperado quede en la MISMA escala que los betas.
     estandarizacion = matriz.attrs.get("estandarizacion")
     if estandarizacion is not None:
-        estandarizacion.rename_axis("factor").to_csv(SALIDA / "factores_estandarizacion.csv")
+        estandarizacion.rename_axis("factor").to_csv(
+            SALIDA / "factores_estandarizacion.csv")
         print(f"  medias/desviaciones de estandarización guardadas en "
               f"{SALIDA / 'factores_estandarizacion.csv'} (la Parte 3 las necesita)")
 
@@ -133,24 +144,25 @@ def main():
                    "(en exceso de rf) contra los factores, con restricción "
                    f"sum(beta) = {VALOR_RESTRICCION}"),
         ("Restricción", f"Impuesta despejando el beta de '{FACTOR_BASE}' y "
-                        "sustituyéndolo en la ecuación (método exacto, sin "
-                        "optimización numérica); ver estimar_exposiciones.py"),
+         "sustituyéndolo en la ecuación (método exacto, sin "
+         "optimización numérica); ver estimar_exposiciones.py"),
         ("Factores", ", ".join(FACTORES)),
         ("Ventana", "Todo el historial disponible" if not VENTANA_MESES
                     else f"Últimos {VENTANA_MESES} meses"),
         ("Mínimo de observaciones", f"{MIN_OBS} meses con dato simultáneo en "
-                                    "la acción y en todos los factores"),
+         "la acción y en todos los factores"),
         ("Estandarización", ("Factores: z-score de cada factor con toda su serie. " if ESTANDARIZAR else "Factores sin estandarizar. ")
-                            + ("Rendimientos en exceso: z-score global (una media y desv. para todas las acciones); "
-                               "los betas quedan en desv. del rendimiento por desv. del factor"
-                               if ESTANDARIZAR_Y else "Rendimientos en exceso sin estandarizar")),
+         + ("Rendimientos en exceso: z-score global (una media y desv. para todas las acciones); "
+            "los betas quedan en desv. del rendimiento por desv. del factor"
+            if ESTANDARIZAR_Y else "Rendimientos en exceso sin estandarizar")),
         ("Datos de entrenamiento", "Todo el historial de precios de cada empresa (rendimientos.csv)"
                                    if ENTRENAR_CON_HISTORIAL else
                                    "Solo meses en el Top 100 (rendimientos_miembros.csv)"),
         ("alpha", "Intercepto de la regresión (rendimiento no explicado por los factores)"),
         ("r2", "R^2 de la regresión; valores bajos indican exposiciones poco confiables"),
         ("n_obs", "Meses usados en la regresión de esa empresa"),
-        ("suma_beta", f"Suma de los betas; debe ser ~{VALOR_RESTRICCION} si la restricción está activa"),
+        ("suma_beta",
+         f"Suma de los betas; debe ser ~{VALOR_RESTRICCION} si la restricción está activa"),
     ], columns=["concepto", "definición"])
 
     with pd.ExcelWriter(SALIDA / "matriz_exposiciones.xlsx", engine="openpyxl") as xw:

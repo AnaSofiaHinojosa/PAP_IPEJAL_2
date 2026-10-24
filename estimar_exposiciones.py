@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
 
-FACTORES_DEFAULT = ["MERCADO", "VALUE", "TAMANO", "MOMENTUM", "VOLATILIDAD", "LIQUIDEZ"]
+FACTORES_DEFAULT = ["MERCADO", "VALUE", "TAMANO",
+                    "MOMENTUM", "VOLATILIDAD", "LIQUIDEZ"]
 FACTOR_BASE_DEFAULT = "MERCADO"
 MIN_OBS_DEFAULT = 24
 VALOR_RESTRICCION_DEFAULT = 1.0
-ESTANDARIZAR_FACTORES_DEFAULT = True    # z-score de cada factor con toda su serie
+# z-score de cada factor con toda su serie
+ESTANDARIZAR_FACTORES_DEFAULT = True
 ESTANDARIZAR_Y_DEFAULT = False          # z-score global del exceso de rendimiento
 
 
@@ -16,7 +18,8 @@ def estandarizar_factores(factores_df: pd.DataFrame,
     f = factores_df[factores]
     media, desv = f.mean(), f.std(ddof=1)
     if (desv.isna() | (desv == 0)).any():
-        raise ValueError(f"Factor sin variación o sin datos: {list(desv[desv.isna() | (desv == 0)].index)}")
+        raise ValueError(
+            f"Factor sin variación o sin datos: {list(desv[desv.isna() | (desv == 0)].index)}")
     z = (f - media) / desv
     return z, pd.DataFrame({"media": media, "desv": desv})
 
@@ -36,10 +39,12 @@ def estimar_exposiciones_beta(
     X : factores (ya estandarizados si aplica), mismas fechas.
     Regresa dict con alpha, beta {factor: beta}, r2, n_obs, suma_beta.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     factor_base = factor_base or FACTOR_BASE_DEFAULT
     if restringir_suma and factor_base not in factores:
-        raise ValueError(f"factor_base '{factor_base}' debe estar en factores {factores}")
+        raise ValueError(
+            f"factor_base '{factor_base}' debe estar en factores {factores}")
 
     datos = X[factores].copy()
     datos["_y_"] = y
@@ -113,7 +118,8 @@ def estimar_matriz_exposiciones(
     La tabla con la media y desviación de cada factor queda en
     matriz.attrs["estandarizacion"] (útil para la Parte 3).
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
 
     if rf is None and "rf" in factores_df.columns:
         rf = factores_df["rf"]

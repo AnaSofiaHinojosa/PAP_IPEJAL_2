@@ -23,13 +23,16 @@ CIK_MANUAL = {
 # empezara a reportar. Verifica cualquier CIK nuevo en
 # https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=<cik>
 CIK_PREDECESORES = {
-    "XOM": ["34088"],     # Exxon Mobil Corp (antes de ExxonMobil Holdings, 2026)
+    # Exxon Mobil Corp (antes de ExxonMobil Holdings, 2026)
+    "XOM": ["34088"],
     "DIS": ["1001039"],   # Walt Disney Co antes de la compra de Fox (2019)
     "MDT": ["64670"],     # Medtronic Inc antes de Medtronic plc (2015)
-    "CI": ["701221"],     # Cigna Corp antes de la compra de Express Scripts (2018)
+    # Cigna Corp antes de la compra de Express Scripts (2018)
+    "CI": ["701221"],
     "GOOG": ["1288776"],  # Google Inc antes de Alphabet (2015)
     "GOOGL": ["1288776"],
-    "WBA": ["104207"],    # Walgreen Co antes de Walgreens Boots Alliance (2014)
+    # Walgreen Co antes de Walgreens Boots Alliance (2014)
+    "WBA": ["104207"],
     # (cik, fecha de corte): se usa el CIK anterior para lo publicado ANTES
     # del corte y se TIRAN los datos del CIK actual anteriores al corte.
     # Hace falta cuando el CIK actual trae historia de OTRA empresa:
@@ -38,7 +41,8 @@ CIK_PREDECESORES = {
     # JCI (splits 2007 1:4 y 2012 2.01167 son de Tyco), así que precio y
     # fundamentales ya son de la misma empresa.
     "LIN": [("884905", "2018-10-31")],  # Praxair Inc antes de Linde plc
-    "DELL": ["826083"],                 # Dell Inc (hasta 2013; privada 2013-2016)
+    # Dell Inc (hasta 2013; privada 2013-2016)
+    "DELL": ["826083"],
 }
 
 # Acciones con varias clases donde la clase que cotiza NO es 1:1 con la que
@@ -109,7 +113,8 @@ def _leer_factset_acciones(patron: str = PATRON_FACTSET) -> pd.DataFrame:
             continue
         try:
             crudo = pd.read_excel(archivo, header=None)
-            fila = crudo.index[crudo.iloc[:, 0].astype(str).str.strip() == "Symbol"]
+            fila = crudo.index[crudo.iloc[:, 0].astype(
+                str).str.strip() == "Symbol"]
             if len(fila) == 0:
                 continue
             df = pd.read_excel(archivo, header=int(fila[0]))
@@ -149,6 +154,7 @@ def cargar_acciones_externas() -> dict[str, pd.DataFrame]:
     todo = (todo.sort_values(["ticker", "fecha", "_m"])
             .drop_duplicates(["ticker", "fecha"], keep="last").drop(columns="_m"))
     return {t: g.sort_values("fecha").reset_index(drop=True) for t, g in todo.groupby("ticker")}
+
 
 # Un dato de EDGAR se arrastra (forward-fill) como máximo este número de
 # días después de publicado. Si la empresa dejó de reportar ese dato, la
@@ -196,15 +202,18 @@ class SecEdgarFundamentalsFetcher:
         self.pausa = pausa_entre_requests  # SEC pide no golpear la API muy rápido
         self.splits = splits or {}
         self.cik_por_ticker: dict[str, str] = {}
-        self.eps_historico: dict[str, pd.DataFrame] = {}      # trimestral + eps_ttm
+        # trimestral + eps_ttm
+        self.eps_historico: dict[str, pd.DataFrame] = {}
         self.acciones_historico: dict[str, pd.DataFrame] = {}
         self.errores: dict[str, str] = {}
         self.cobertura: dict[str, dict] = {}
-        self._descartes: dict[str, list[str]] = {}  # registros tirados por escala
+        # registros tirados por escala
+        self._descartes: dict[str, list[str]] = {}
         self._ticker_actual = None
         self.acciones_externas = cargar_acciones_externas()
         if self.acciones_externas:
-            print(f"  Acciones externas (FactSet/manual) para {len(self.acciones_externas)} tickers")
+            print(
+                f"  Acciones externas (FactSet/manual) para {len(self.acciones_externas)} tickers")
 
     # ------------------------------------------------------------------ #
     # Descarga
@@ -223,7 +232,8 @@ class SecEdgarFundamentalsFetcher:
                 for row in data.values()
             }
         except Exception as e:
-            raise RuntimeError(f"No se pudo descargar el mapeo ticker->CIK: {e}")
+            raise RuntimeError(
+                f"No se pudo descargar el mapeo ticker->CIK: {e}")
 
     def _buscar_cik(self, ticker: str) -> str | None:
         t = normalizar_ticker_sec(ticker)
@@ -256,7 +266,8 @@ class SecEdgarFundamentalsFetcher:
         corte_default = self._fecha_min_filed(facts) or "9999-12-31"
         usados = []
         for entrada in predecesores:
-            cik_p, corte = (entrada if isinstance(entrada, tuple) else (entrada, None))
+            cik_p, corte = (entrada if isinstance(
+                entrada, tuple) else (entrada, None))
             if corte:
                 # quitar del CIK actual lo publicado antes del corte
                 for tags in facts.get("facts", {}).values():
@@ -277,8 +288,10 @@ class SecEdgarFundamentalsFetcher:
                 for tag, nodo in tags.items():
                     destino_tag = destino_tax.setdefault(tag, {"units": {}})
                     for unidad, regs in nodo.get("units", {}).items():
-                        previos = [r for r in regs if (r.get("filed") or "9999") < corte]
-                        destino_tag.setdefault("units", {}).setdefault(unidad, []).extend(previos)
+                        previos = [r for r in regs if (
+                            r.get("filed") or "9999") < corte]
+                        destino_tag.setdefault("units", {}).setdefault(
+                            unidad, []).extend(previos)
         return facts, usados
 
     # ------------------------------------------------------------------ #
@@ -288,7 +301,8 @@ class SecEdgarFundamentalsFetcher:
                    tipo: str | None = None) -> pd.DataFrame:
         """Registros 10-K/10-Q de un tag, ya en base de acciones de hoy.
         tipo: 'por_accion' (EPS), 'acciones' o None (montos en USD)."""
-        cols = ["start", "end", "filed", "valor", "form", "fy", "fp", "tag", "factor"]
+        cols = ["start", "end", "filed", "valor",
+                "form", "fy", "fp", "tag", "factor"]
         nombre = f"{taxonomia}:{tag}"
         if nombre in TAGS_EXCLUIDOS.get(self._ticker_actual, set()):
             return pd.DataFrame(columns=cols)
@@ -316,7 +330,8 @@ class SecEdgarFundamentalsFetcher:
         # después del split de 2010), así que NO se multiplican además los
         # splits de la clase B: eso contaba el split dos veces (factor 75,000).
         if self._ticker_actual in CONVERSION_CLASE:
-            f = pd.Series(float(CONVERSION_CLASE[self._ticker_actual]), index=df.index)
+            f = pd.Series(
+                float(CONVERSION_CLASE[self._ticker_actual]), index=df.index)
         else:
             f = factor_split(df["filed"], self.splits.get(self._ticker_actual))
         df["factor"] = f.values
@@ -361,12 +376,14 @@ class SecEdgarFundamentalsFetcher:
             return pd.DataFrame()
         df = df.dropna(subset=["start"]).copy()
         df["dias"] = (df["end"] - df["start"]).dt.days
-        df = df.sort_values("filed").drop_duplicates(["start", "end"], keep="first")
+        df = df.sort_values("filed").drop_duplicates(
+            ["start", "end"], keep="first")
 
         q = df[df["dias"].between(80, 100)].copy()
         q = q.sort_values("filed").drop_duplicates("end", keep="first")
         q["origen"] = "reportado"
-        anual = df[df["dias"].between(350, 380)].drop_duplicates("end", keep="first")
+        anual = df[df["dias"].between(350, 380)].drop_duplicates(
+            "end", keep="first")
 
         # El Q4 derivado del 10-K se calcula SIEMPRE y compite con un Q4
         # "reportado" por fecha de publicación. Antes, si un 10-K posterior
@@ -386,7 +403,8 @@ class SecEdgarFundamentalsFetcher:
                 fila["origen"] = "Q4 = anual - 3 trimestres"
             else:
                 fila["origen"] = "Q4 = dato anual (aprox.)"
-            fila["start"] = (dentro["end"].max() + pd.Timedelta(days=1)) if len(dentro) else a["start"]
+            fila["start"] = (dentro["end"].max() +
+                             pd.Timedelta(days=1)) if len(dentro) else a["start"]
             fila["dias"] = (fila["end"] - fila["start"]).days
             nuevos.append(fila)
 
@@ -396,7 +414,8 @@ class SecEdgarFundamentalsFetcher:
         # a <=7 días se consideran el mismo trimestre: años de 52/53 semanas).
         # En empate de fecha gana el reportado sobre el derivado.
         q["_deriv"] = (q["origen"] != "reportado").astype(int)
-        q = q.sort_values(["filed", "_deriv"]).drop(columns="_deriv").reset_index(drop=True)
+        q = q.sort_values(["filed", "_deriv"]).drop(
+            columns="_deriv").reset_index(drop=True)
         conservar, fines = [], []
         for i, e in q["end"].items():
             if all(abs((e - f).days) > 7 for f in fines):
@@ -410,7 +429,8 @@ class SecEdgarFundamentalsFetcher:
         ya era público es la publicación más reciente de esos 4 trimestres."""
         q = q.sort_values("end").reset_index(drop=True)
         q["eps_ttm"] = q["valor"].rolling(4).sum()
-        q["filed_ttm"] = pd.concat([q["filed"].shift(i) for i in range(4)], axis=1).max(axis=1)
+        q["filed_ttm"] = pd.concat([q["filed"].shift(i)
+                                   for i in range(4)], axis=1).max(axis=1)
         span = (q["end"] - q["end"].shift(3)).dt.days
         sin_ttm = ~span.between(250, 290)  # huecos -> no hay TTM
         q.loc[sin_ttm, "eps_ttm"] = float("nan")
@@ -428,7 +448,8 @@ class SecEdgarFundamentalsFetcher:
                 continue
             a = reg.dropna(subset=["start"]).copy()
             a["dias"] = (a["end"] - a["start"]).dt.days
-            a = a[a["dias"].between(350, 380)].sort_values("filed").drop_duplicates("end")
+            a = a[a["dias"].between(350, 380)].sort_values(
+                "filed").drop_duplicates("end")
             if not a.empty:
                 anuales.append(a.assign(prioridad=prioridad))
             if (tax, tag, unidad) in EPS_TAGS:
@@ -439,17 +460,21 @@ class SecEdgarFundamentalsFetcher:
         if not partes:
             return pd.DataFrame()
         todo = pd.concat(partes, ignore_index=True)
-        todo = todo.sort_values(["prioridad", "filed"]).drop_duplicates("end", keep="first")
-        todo = todo.drop(columns="prioridad").sort_values("end").reset_index(drop=True)
+        todo = todo.sort_values(["prioridad", "filed"]
+                                ).drop_duplicates("end", keep="first")
+        todo = todo.drop(columns="prioridad").sort_values(
+            "end").reset_index(drop=True)
         if anuales:
-            todo = self._completar_q4(todo, pd.concat(anuales, ignore_index=True))
+            todo = self._completar_q4(
+                todo, pd.concat(anuales, ignore_index=True))
         return todo
 
     @staticmethod
     def _completar_q4(q: pd.DataFrame, anual: pd.DataFrame) -> pd.DataFrame:
         """Q4 = anual - (Q1+Q2+Q3) para los años que todavía no tienen Q4,
         usando el anual del tag de mayor prioridad que lo tenga."""
-        anual = anual.sort_values(["prioridad", "filed"]).drop_duplicates("end")
+        anual = anual.sort_values(
+            ["prioridad", "filed"]).drop_duplicates("end")
         nuevos = []
         siete = pd.Timedelta(days=7)
         for _, a in anual.iterrows():
@@ -476,7 +501,8 @@ class SecEdgarFundamentalsFetcher:
         en 2022, como FCX)."""
         opciones = []
         for pu, (tax_u, tag_u, un_u) in enumerate(UTILIDAD_TAGS):
-            ni = self._trimestres_point_in_time(self._registros(facts, tax_u, tag_u, un_u))
+            ni = self._trimestres_point_in_time(
+                self._registros(facts, tax_u, tag_u, un_u))
             if ni.empty:
                 continue
             for ps, (tax_s, tag_s, un_s) in enumerate(ACCIONES_PROMEDIO_TAGS):
@@ -484,26 +510,31 @@ class SecEdgarFundamentalsFetcher:
                     self._registros(facts, tax_s, tag_s, un_s, tipo="acciones"), sumable=False)
                 if sh.empty:
                     continue
-                m = ni.merge(sh[["end", "valor", "filed", "factor"]], on="end", suffixes=("", "_acc"))
+                m = ni.merge(sh[["end", "valor", "filed", "factor"]],
+                             on="end", suffixes=("", "_acc"))
                 m = m[m["valor_acc"] > 0]
                 if len(m) >= 4:
                     m["valor"] = m["valor"] / m["valor_acc"]
                     m["filed"] = m[["filed", "filed_acc"]].max(axis=1)
-                    m["factor"] = m["factor_acc"]  # el ajuste relevante es el de las acciones
+                    # el ajuste relevante es el de las acciones
+                    m["factor"] = m["factor_acc"]
                     m["tag"] = f"calculado: {tag_u} / {tag_s}"
                     m["origen"] = m["origen"] + " (EPS calculada)"
-                    m = m.drop(columns=["valor_acc", "filed_acc", "factor_acc"]).reset_index(drop=True)
+                    m = m.drop(columns=["valor_acc", "filed_acc", "factor_acc"]).reset_index(
+                        drop=True)
                     opciones.append((m["end"].max(), -(pu * 10 + ps), m))
         # EPS = utilidad neta / acciones EXTERNAS (BRK.B, V): la acción vigente
         # al cierre de cada trimestre (dato externo más reciente, máx. 1 año).
         ext = self.acciones_externas.get(self._ticker_actual)
         if ext is not None and not ext.empty:
             for pu, (tax_u, tag_u, un_u) in enumerate(UTILIDAD_TAGS):
-                ni = self._trimestres_point_in_time(self._registros(facts, tax_u, tag_u, un_u))
+                ni = self._trimestres_point_in_time(
+                    self._registros(facts, tax_u, tag_u, un_u))
                 if ni.empty:
                     continue
                 m = pd.merge_asof(ni.sort_values("end"),
-                                  ext[["fecha", "acciones"]].rename(columns={"fecha": "_f"}).sort_values("_f"),
+                                  ext[["fecha", "acciones"]].rename(
+                                      columns={"fecha": "_f"}).sort_values("_f"),
                                   left_on="end", right_on="_f", direction="backward",
                                   tolerance=pd.Timedelta(days=DIAS_ARRASTRE_EXTERNO))
                 m = m.dropna(subset=["acciones"])
@@ -511,8 +542,10 @@ class SecEdgarFundamentalsFetcher:
                     m["valor"] = m["valor"] / m["acciones"]
                     m["factor"] = 1.0
                     m["tag"] = f"calculado: {tag_u} / acciones externas"
-                    m["origen"] = m["origen"] + " (EPS calculada, acciones externas)"
-                    m = m.drop(columns=["acciones", "_f"]).reset_index(drop=True)
+                    m["origen"] = m["origen"] + \
+                        " (EPS calculada, acciones externas)"
+                    m = m.drop(columns=["acciones", "_f"]
+                               ).reset_index(drop=True)
                     # prioridad baja: solo gana si llega más lejos que las otras
                     opciones.append((m["end"].max(), -1000 - pu, m))
                 break
@@ -549,8 +582,10 @@ class SecEdgarFundamentalsFetcher:
             # clave de orden: reportada a tiempo primero; luego la que se
             # publicó antes; en empate, la reportada
             todo["_orden"] = todo["filed"]
-            todo.loc[todo.index[:len(rep)][a_tiempo.values], "_orden"] = pd.Timestamp("1900-01-01")
-            todo = todo.sort_values(["_orden", "_fuente"]).reset_index(drop=True)
+            todo.loc[todo.index[:len(rep)][a_tiempo.values], "_orden"] = pd.Timestamp(
+                "1900-01-01")
+            todo = todo.sort_values(
+                ["_orden", "_fuente"]).reset_index(drop=True)
             conservar, fines = [], []
             for i, e in todo["end"].items():
                 if all(abs((e - f).days) > 7 for f in fines):
@@ -571,11 +606,13 @@ class SecEdgarFundamentalsFetcher:
         (mediana del cociente entre 0.8 y 1.25, con al menos 4 trimestres).
         Si no, algún tag viene con escala o definición distinta (TMO, ICE)."""
         m = pd.merge_asof(calc.sort_values("end")[["end", "valor"]],
-                          rep.sort_values("end")[["end", "valor"]].rename(columns={"valor": "rep"}),
+                          rep.sort_values("end")[["end", "valor"]].rename(
+                              columns={"valor": "rep"}),
                           on="end", tolerance=pd.Timedelta(days=7), direction="nearest")
         m = m.dropna()
         m = m[m["rep"].abs() > 0.05]
-        externa = calc["tag"].astype(str).str.contains("acciones externas").any()
+        externa = calc["tag"].astype(str).str.contains(
+            "acciones externas").any()
         if len(m) < 4 and externa:
             return True   # sin trimestres comunes para comparar: se confía en la fuente externa
         if len(m) < 4:
@@ -620,7 +657,8 @@ class SecEdgarFundamentalsFetcher:
             nuevos = [r for _, r in otro.iterrows()
                       if (abs(fb - r["filed"].to_datetime64()) > pd.Timedelta(days=dias).to_timedelta64()).all()]
             if nuevos:
-                base = pd.concat([base, pd.DataFrame(nuevos)], ignore_index=True)
+                base = pd.concat(
+                    [base, pd.DataFrame(nuevos)], ignore_index=True)
         return base.sort_values("filed").reset_index(drop=True)
 
     def _quitar_picos(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -645,7 +683,8 @@ class SecEdgarFundamentalsFetcher:
         año), para que no se pierda por DIAS_MAX_VIGENCIA."""
         ext = self.acciones_externas.get(self._ticker_actual)
         if ext is None:
-            ext = self.acciones_externas.get(normalizar_ticker_sec(self._ticker_actual).replace("-", "."))
+            ext = self.acciones_externas.get(
+                normalizar_ticker_sec(self._ticker_actual).replace("-", "."))
         if ext is None or ext.empty:
             return pd.DataFrame()
         filas = []
@@ -675,7 +714,8 @@ class SecEdgarFundamentalsFetcher:
                 if df.empty:
                     continue
             else:
-                df = df.sort_values("filed").drop_duplicates("end", keep="first")
+                df = df.sort_values("filed").drop_duplicates(
+                    "end", keep="first")
             df = df[df["valor"] > 0]
             # quita valores absurdos (p. ej. "100 acciones" al crear una holding)
             if len(df) >= 3:
@@ -695,7 +735,8 @@ class SecEdgarFundamentalsFetcher:
         ultimo = max(c[0] for c in candidatos)
         mejor = max(candidatos,
                     key=lambda c: (c[0] >= ultimo - pd.Timedelta(days=120), c[1], c[2]))[3]
-        mejor = self._rellenar_huecos(mejor, [c[3] for c in candidatos if c[3] is not mejor])
+        mejor = self._rellenar_huecos(
+            mejor, [c[3] for c in candidatos if c[3] is not mejor])
         mejor = self._quitar_picos(mejor)
         if not externas.empty:   # al final: solo donde EDGAR no tiene nada
             mejor = self._rellenar_huecos(mejor, [externas])
@@ -745,8 +786,9 @@ class SecEdgarFundamentalsFetcher:
                     ttm = eps.dropna(subset=["eps_ttm"])
                     cob.update(eps_ok=True, eps_tag=", ".join(sorted(eps["tag"].unique())),
                                eps_trimestres=len(eps),
-                               eps_ttm_desde=ttm["end"].min().date() if len(ttm) else None,
-                               eps_ttm_hasta=ttm["end"].max().date() if len(ttm) else None)
+                               eps_ttm_desde=ttm["end"].min(
+                    ).date() if len(ttm) else None,
+                        eps_ttm_hasta=ttm["end"].max().date() if len(ttm) else None)
                 except Exception as e:
                     errores.append(f"EPS: {e}")
 
@@ -770,8 +812,10 @@ class SecEdgarFundamentalsFetcher:
                 self.errores[ticker] = " | ".join(errores)
                 cob["error"] = self.errores[ticker]
             self.cobertura[ticker] = cob
-            resultados[ticker] = ResultadoEdgar(ticker, ok=not errores, error=cob["error"])
-            time.sleep(self.pausa)  # buena práctica para no saturar la API de la SEC
+            resultados[ticker] = ResultadoEdgar(
+                ticker, ok=not errores, error=cob["error"])
+            # buena práctica para no saturar la API de la SEC
+            time.sleep(self.pausa)
 
         self._ticker_actual = None
         return resultados
@@ -831,7 +875,8 @@ def completar_eps_con_yahoo(eps_df: pd.DataFrame, eps_yahoo: pd.Series | None,
 def _vigente_por_filed(indice_mensual, fechas, valores) -> pd.Series:
     """Último valor publicado a cada fin de mes, sin arrastrar datos de más
     de DIAS_MAX_VIGENCIA días."""
-    s = pd.Series(pd.Series(valores).values, index=pd.to_datetime(pd.Series(fechas).values))
+    s = pd.Series(pd.Series(valores).values,
+                  index=pd.to_datetime(pd.Series(fechas).values))
     s = s[s.index.notna()].dropna()
     s = s[~s.index.duplicated(keep="last")].sort_index()
     if s.empty:

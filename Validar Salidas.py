@@ -48,11 +48,13 @@ def validar_eps(t, eps, alertas):
     absx = e["eps_trimestral"].abs()
     vecinos = absx.rolling(9, center=True, min_periods=4).median()
     # mismo trimestre fiscal en años vecinos (t-8, t-4, t+4, t+8)
-    mismo_q = pd.concat([absx.shift(k) for k in (-8, -4, 4, 8)], axis=1).median(axis=1)
+    mismo_q = pd.concat([absx.shift(k)
+                        for k in (-8, -4, 4, 8)], axis=1).median(axis=1)
     if med_abs and med_abs > 0:
         for i, r in e.iterrows():
             x = abs(r["eps_trimestral"])
-            ref = vecinos[i] if pd.notna(vecinos[i]) and vecinos[i] > 0 else med_abs
+            ref = vecinos[i] if pd.notna(
+                vecinos[i]) and vecinos[i] > 0 else med_abs
             if 0 < x < med_abs / 1000:
                 _alerta(alertas, t, "EPS", "ALTA", "escala", r["end"],
                         f"EPS {r['eps_trimestral']:.3g} ~0 vs mediana |EPS| {med_abs:.3g} "
@@ -82,7 +84,8 @@ def validar_mensual(t, m, alertas):
                     f"máx {malos['market_cap'].max():.3g})")
     if "rotacion" in m:
         ro = m.dropna(subset=["rotacion"])
-        bajos = ro[ro["rotacion"] < 0.0005]   # típico de acciones con escala x1000+
+        # típico de acciones con escala x1000+
+        bajos = ro[ro["rotacion"] < 0.0005]
         if len(bajos):
             _alerta(alertas, t, "Mensual", "ALTA", "rotacion", bajos["fecha"].iloc[0],
                     f"{len(bajos)} meses con rotación < 0.0005 "
@@ -123,9 +126,11 @@ def main(carpeta: str = "salidas/empresas"):
         validar_eps(t, _hoja(arch, "EPS"), alertas)
         validar_mensual(t, _hoja(arch, "Mensual"), alertas)
 
-    df = pd.DataFrame(alertas, columns=["ticker", "hoja", "severidad", "tipo", "fecha", "detalle"])
+    df = pd.DataFrame(alertas, columns=[
+                      "ticker", "hoja", "severidad", "tipo", "fecha", "detalle"])
     orden = {"ALTA": 0, "MEDIA": 1, "INFO": 2}
-    df = df.sort_values(["severidad", "ticker", "fecha"], key=lambda s: s.map(orden) if s.name == "severidad" else s)
+    df = df.sort_values(["severidad", "ticker", "fecha"], key=lambda s: s.map(
+        orden) if s.name == "severidad" else s)
     salida = carpeta.parent / "validacion.csv"
     df.to_csv(salida, index=False, encoding="utf-8-sig")
 
@@ -133,7 +138,8 @@ def main(carpeta: str = "salidas/empresas"):
     if not df.empty:
         print(df.groupby(["severidad", "tipo"]).size().to_string())
         altas = df[df["severidad"] == "ALTA"]["ticker"].unique()
-        print(f"\nEmpresas con alertas ALTAS ({len(altas)}): {', '.join(altas) or 'ninguna'}")
+        print(
+            f"\nEmpresas con alertas ALTAS ({len(altas)}): {', '.join(altas) or 'ninguna'}")
 
 
 if __name__ == "__main__":

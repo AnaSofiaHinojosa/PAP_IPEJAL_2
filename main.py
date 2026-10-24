@@ -42,19 +42,22 @@ class PAPFactorPipeline:
 
     def __init__(self, tickers_originales: list[str], info_universo: pd.DataFrame | None = None):
         self.tickers_originales = tickers_originales
-        self.tickers_yahoo = [normalizar_ticker_yahoo(t) for t in tickers_originales]
+        self.tickers_yahoo = [normalizar_ticker_yahoo(
+            t) for t in tickers_originales]
         self.info_universo = (info_universo.set_index("Ticker")
                               if info_universo is not None and "Ticker" in info_universo
                               else pd.DataFrame())
 
         self.yahoo_fetcher = YahooFactorDataFetcher(self.tickers_yahoo)
-        self.edgar_fetcher = SecEdgarFundamentalsFetcher(self.tickers_originales)
+        self.edgar_fetcher = SecEdgarFundamentalsFetcher(
+            self.tickers_originales)
 
         self.tabla_mensual: dict[str, pd.DataFrame] = {}
         self.errores_pe_mcap: dict[str, str] = {}
 
     def ejecutar(self) -> None:
-        print(f"Descargando precios/volumen de Yahoo para {len(self.tickers_yahoo)} tickers...")
+        print(
+            f"Descargando precios/volumen de Yahoo para {len(self.tickers_yahoo)} tickers...")
         self.yahoo_fetcher.descargar_precios_mensuales()
         self.yahoo_fetcher.descargar_mercado_y_libre_riesgo()
 
@@ -65,7 +68,8 @@ class PAPFactorPipeline:
             for t_orig, t_yahoo in zip(self.tickers_originales, self.tickers_yahoo)
         }
 
-        print(f"Descargando fundamentales de SEC EDGAR para {len(self.tickers_originales)} tickers...")
+        print(
+            f"Descargando fundamentales de SEC EDGAR para {len(self.tickers_originales)} tickers...")
         self.edgar_fetcher.descargar_fundamentales()
 
         # Trimestres recientes que la SEC todavía no publica en su API -> Yahoo
@@ -79,7 +83,8 @@ class PAPFactorPipeline:
                 cob = self.edgar_fetcher.cobertura.get(t_orig, {})
                 cob["eps_trimestres_yahoo"] = n
                 ttm = nuevo.dropna(subset=["eps_ttm"])
-                cob["eps_ttm_hasta"] = ttm["end"].max().date() if len(ttm) else cob.get("eps_ttm_hasta")
+                cob["eps_ttm_hasta"] = ttm["end"].max().date() if len(
+                    ttm) else cob.get("eps_ttm_hasta")
 
         print("Construyendo tabla mensual por empresa (P/E, market cap, rotación)...")
         for t_orig, t_yahoo in zip(self.tickers_originales, self.tickers_yahoo):
@@ -92,11 +97,15 @@ class PAPFactorPipeline:
             try:
                 if eps_df is not None:
                     tabla["eps_ttm"] = eps_ttm_mensual(tabla.index, eps_df)
-                    tabla["pe"] = construir_pe_mensual(tabla["precio_cierre"], eps_df)
+                    tabla["pe"] = construir_pe_mensual(
+                        tabla["precio_cierre"], eps_df)
                 if acc_df is not None:
-                    tabla["acciones_circulacion"] = acciones_mensual(tabla.index, acc_df)
-                    tabla["market_cap"] = construir_market_cap_mensual(tabla["precio_cierre"], acc_df)
-                    tabla["rotacion"] = tabla["volumen"] / tabla["acciones_circulacion"]
+                    tabla["acciones_circulacion"] = acciones_mensual(
+                        tabla.index, acc_df)
+                    tabla["market_cap"] = construir_market_cap_mensual(
+                        tabla["precio_cierre"], acc_df)
+                    tabla["rotacion"] = tabla["volumen"] / \
+                        tabla["acciones_circulacion"]
             except Exception as e:
                 self.errores_pe_mcap[t_orig] = str(e)
             self.tabla_mensual[t_orig] = tabla
@@ -118,7 +127,8 @@ class PAPFactorPipeline:
     def _info_empresa(self, t_orig: str, t_yahoo: str) -> pd.DataFrame:
         cob = self.edgar_fetcher.cobertura.get(t_orig, {})
         tabla = self.tabla_mensual.get(t_orig)
-        uni = self.info_universo.loc[t_orig] if t_orig in self.info_universo.index else {}
+        uni = self.info_universo.loc[t_orig] if t_orig in self.info_universo.index else {
+        }
 
         def meses(col):
             return int(tabla[col].notna().sum()) if tabla is not None and col in tabla else 0
@@ -160,7 +170,8 @@ class PAPFactorPipeline:
         with pd.ExcelWriter(archivo, engine="openpyxl") as xw:
             tabla = self.tabla_mensual.get(t_orig)
             if tabla is not None:
-                _sin_hora(tabla.reset_index()).to_excel(xw, sheet_name="Mensual", index=False)
+                _sin_hora(tabla.reset_index()).to_excel(
+                    xw, sheet_name="Mensual", index=False)
             else:
                 pd.DataFrame({"nota": ["Sin precios de Yahoo; ver hoja Info"]}).to_excel(
                     xw, sheet_name="Mensual", index=False)
@@ -182,8 +193,10 @@ class PAPFactorPipeline:
             # anchos de columna legibles
             for hoja in xw.sheets.values():
                 for col in hoja.columns:
-                    largo = max(len(str(c.value)) if c.value is not None else 0 for c in col)
-                    hoja.column_dimensions[col[0].column_letter].width = min(max(12, largo + 2), 60)
+                    largo = max(len(str(c.value))
+                                if c.value is not None else 0 for c in col)
+                    hoja.column_dimensions[col[0].column_letter].width = min(
+                        max(12, largo + 2), 60)
 
     def _guardar_seguro(self, archivo: Path, escribir) -> None:
         """Si el archivo está abierto en Excel (Windows lo bloquea), guarda una
@@ -192,12 +205,15 @@ class PAPFactorPipeline:
         try:
             escribir(archivo)
         except PermissionError:
-            alterno = archivo.with_name(f"{archivo.stem}_nuevo{archivo.suffix}")
+            alterno = archivo.with_name(
+                f"{archivo.stem}_nuevo{archivo.suffix}")
             try:
                 escribir(alterno)
-                self.archivos_bloqueados.append(f"{archivo.name} -> se guardó como {alterno.name}")
+                self.archivos_bloqueados.append(
+                    f"{archivo.name} -> se guardó como {alterno.name}")
             except PermissionError:
-                self.archivos_bloqueados.append(f"{archivo.name} -> NO se pudo guardar")
+                self.archivos_bloqueados.append(
+                    f"{archivo.name} -> NO se pudo guardar")
 
     def guardar_resultados(self, carpeta: Path = CARPETA_SALIDA) -> None:
         carpeta_emp = carpeta / "empresas"
@@ -207,8 +223,10 @@ class PAPFactorPipeline:
         # Excel de corridas anteriores de empresas que YA NO están en el
         # universo -> se mueven a salidas/empresas_anteriores (no se borran)
         # para que validar_salidas.py no los revise como si fueran actuales.
-        vigentes = {f"{t.replace('.', '-')}.xlsx" for t in self.tickers_originales}
-        viejos = [a for a in carpeta_emp.glob("*.xlsx") if a.name not in vigentes]
+        vigentes = {
+            f"{t.replace('.', '-')}.xlsx" for t in self.tickers_originales}
+        viejos = [a for a in carpeta_emp.glob(
+            "*.xlsx") if a.name not in vigentes]
         if viejos:
             destino = carpeta / "empresas_anteriores"
             destino.mkdir(exist_ok=True)
@@ -216,14 +234,17 @@ class PAPFactorPipeline:
                 try:
                     a.replace(destino / a.name)
                 except PermissionError:
-                    self.archivos_bloqueados.append(f"{a.name} (no se pudo mover; ciérralo)")
-            print(f"{len(viejos)} archivos de empresas fuera del universo movidos a {destino}")
+                    self.archivos_bloqueados.append(
+                        f"{a.name} (no se pudo mover; ciérralo)")
+            print(
+                f"{len(viejos)} archivos de empresas fuera del universo movidos a {destino}")
 
         resumen = []
         for t_orig, t_yahoo in zip(self.tickers_originales, self.tickers_yahoo):
             info = self._info_empresa(t_orig, t_yahoo)
             archivo = carpeta_emp / f"{t_orig.replace('.', '-')}.xlsx"
-            self._guardar_seguro(archivo, lambda a: self._escribir_excel_empresa(a, t_orig, info))
+            self._guardar_seguro(
+                archivo, lambda a: self._escribir_excel_empresa(a, t_orig, info))
             resumen.append(dict(zip(info["campo"], info["valor"])))
 
         # Mercado
@@ -243,7 +264,8 @@ class PAPFactorPipeline:
                              lambda a: pd.DataFrame(resumen).to_excel(a, index=False))
 
         if self.archivos_bloqueados:
-            print("\nAVISO: estos archivos estaban abiertos (ciérralos en Excel antes de correr):")
+            print(
+                "\nAVISO: estos archivos estaban abiertos (ciérralos en Excel antes de correr):")
             for linea in self.archivos_bloqueados:
                 print("   ", linea)
 
@@ -257,13 +279,15 @@ def revisar_cobertura_precios(pipeline: "PAPFactorPipeline", resumen: pd.DataFra
     filas = []
     for _, r in resumen.iterrows():
         tabla = pipeline.tabla_mensual.get(r["Ticker"])
-        precio = tabla["precio_ajustado"].dropna() if tabla is not None and "precio_ajustado" in tabla else pd.Series(dtype=float)
+        precio = tabla["precio_ajustado"].dropna(
+        ) if tabla is not None and "precio_ajustado" in tabla else pd.Series(dtype=float)
         desde = precio.index.min() if len(precio) else pd.NaT
         hasta = precio.index.max() if len(precio) else pd.NaT
         inicio_top = pd.Timestamp(f"{int(r['Primer_anio'])}-01-01")
         if pd.isna(desde):
             alerta = "SIN_PRECIOS"
-        elif desde > inicio_top + pd.DateOffset(months=2):   # tolera IPOs/escisiones de enero
+        # tolera IPOs/escisiones de enero
+        elif desde > inicio_top + pd.DateOffset(months=2):
             alerta = "PRECIOS_EMPIEZAN_TARDE"
         else:
             alerta = ""
@@ -285,9 +309,11 @@ def main():
     # 1. Parámetros de entrada
     HISTORICAL_DIR = "Data"
     EXCEL_2026_PATH = "Data/holdings-daily-us-en-spy.xlsx"
-    FACTSET_DIR = "Data/factset"   # SP500_AAAA.xlsx de FactSet Screening (opcional)
+    # SP500_AAAA.xlsx de FactSet Screening (opcional)
+    FACTSET_DIR = "Data/factset"
     TOP_N = 100
-    ANIO_INICIO = 2010             # primer año de tenencia (regla del profesor)
+    # primer año de tenencia (regla del profesor)
+    ANIO_INICIO = 2010
 
     # 2. Universo COMPLETO del S&P 500 por año de tenencia. Si hay exportación
     #    de FactSet para un año, sustituye a los holdings del SPY de ese año.
@@ -298,14 +324,17 @@ def main():
         top_n=None
     )
     df_hold = builder.build()
-    df_fs = FactSetScreeningLoader(FACTSET_DIR).build() if Path(FACTSET_DIR).exists() else None
+    df_fs = FactSetScreeningLoader(FACTSET_DIR).build() if Path(
+        FACTSET_DIR).exists() else None
     df_pit = combinar_fuentes(df_hold, df_fs)
     df_pit.to_csv("universo_sp500_completo.csv", index=False)
     print(df_pit.groupby("Year")["Fuente"].first().to_string())
 
     # 3. Top 100 por market cap de CADA año (al cierre de diciembre anterior)
-    print(f"\n[Paso 2/6] Seleccionando el top {TOP_N} de cada año desde {ANIO_INICIO}...")
-    selector = AnnualTop100Selector(df_pit, anio_inicio=ANIO_INICIO, top_n=TOP_N)
+    print(
+        f"\n[Paso 2/6] Seleccionando el top {TOP_N} de cada año desde {ANIO_INICIO}...")
+    selector = AnnualTop100Selector(
+        df_pit, anio_inicio=ANIO_INICIO, top_n=TOP_N)
     selector.calculate_rankings()
     selector.export_summary_to_csv("seleccion_anual_top100.csv",
                                    revision_path="revision_top100_anual.csv")

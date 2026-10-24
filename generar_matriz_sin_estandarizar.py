@@ -4,7 +4,7 @@ import generar_matriz as gm
 
 SALIDA = Path("salidas/exposiciones_sin_estandarizar")
 ESTANDARIZAR = False        # <- la diferencia del modelo 1
-ESTANDARIZAR_Y = False      
+ESTANDARIZAR_Y = False
 
 
 def main():
@@ -22,7 +22,8 @@ def main():
     try:
         gm.main()
     finally:
-        gm.SALIDA, gm.ESTANDARIZAR, gm.ESTANDARIZAR_Y = originales   # deja generar_matriz como estaba
+        # deja generar_matriz como estaba
+        gm.SALIDA, gm.ESTANDARIZAR, gm.ESTANDARIZAR_Y = originales
 
 
 if __name__ == "__main__":

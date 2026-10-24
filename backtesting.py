@@ -13,7 +13,8 @@ from estimar_exposiciones import (
 from estimar_rendimiento import calcular_factor_esperado
 
 FRECUENCIA_DEFAULT = 12     # meses entre re-estimaciones de beta
-MIN_ACCIONES_IC = 10        # mínimo de acciones con dato simultáneo para calcular IC ese mes
+# mínimo de acciones con dato simultáneo para calcular IC ese mes
+MIN_ACCIONES_IC = 10
 
 
 # 1) Re-estimación de betas por ventana móvil (walk-forward)
@@ -42,7 +43,8 @@ def construir_exposiciones_rolling(
         estadisticas_por_fecha   dict {fecha_corte: tabla media/desv, o None
                                   si estandarizar=False}
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     fechas = factores_df.index.sort_values()
 
     exposiciones = {}
@@ -66,7 +68,8 @@ def construir_exposiciones_rolling(
             estandarizar=estandarizar, **kwargs_exposiciones,
         )
         exposiciones[fecha_corte] = matriz
-        estadisticas[fecha_corte] = matriz.attrs.get("estandarizacion")  # None si estandarizar=False
+        estadisticas[fecha_corte] = matriz.attrs.get(
+            "estandarizacion")  # None si estandarizar=False
 
     return exposiciones, estadisticas
 
@@ -96,11 +99,13 @@ def _factor_esperado_por_corte(
     for corte, stats in estadisticas_por_fecha.items():
         f = factores_df[factores]
         if stats is not None:
-            z = (f - stats.loc[factores, "media"]) / stats.loc[factores, "desv"]
+            z = (f - stats.loc[factores, "media"]) / \
+                stats.loc[factores, "desv"]
         else:
             z = f
         columnas = {
-            k: calcular_factor_esperado(z[k], ventana=ventana_factor, rezago=rezago_factor)
+            k: calcular_factor_esperado(
+                z[k], ventana=ventana_factor, rezago=rezago_factor)
             for k in factores
         }
         resultado[corte] = pd.DataFrame(columnas, index=factores_df.index)
@@ -125,7 +130,8 @@ def calcular_rendimiento_esperado_backtest(
     anterior disponible (arranque del backtest) o donde el factor esperado
     de ese mes está incompleto.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
     cortes_ordenados = sorted(exposiciones_por_fecha.keys())
     factor_esperado_por_corte = _factor_esperado_por_corte(
         factores_df, factores, estadisticas_por_fecha, ventana_factor, rezago_factor,
@@ -140,7 +146,8 @@ def calcular_rendimiento_esperado_backtest(
         if fe.isna().any():
             continue
         betas = exposiciones_por_fecha[corte][factores]
-        filas[fecha] = pd.Series(betas.to_numpy() @ fe.to_numpy(), index=betas.index)
+        filas[fecha] = pd.Series(
+            betas.to_numpy() @ fe.to_numpy(), index=betas.index)
 
     if not filas:
         return pd.DataFrame()
@@ -164,7 +171,8 @@ def calcular_ic_serie(
     for fecha in sorted(fechas):
         esp = rendimiento_esperado.loc[fecha]
         real = rendimiento_real.loc[fecha]
-        datos = pd.concat([esp, real], axis=1, keys=["esperado", "real"]).dropna()
+        datos = pd.concat([esp, real], axis=1, keys=[
+                          "esperado", "real"]).dropna()
         if len(datos) < min_acciones:
             continue
         rho, _ = spearmanr(datos["esperado"], datos["real"])
@@ -212,7 +220,8 @@ def backtest_modelo(
     (exposiciones por fecha, rendimiento esperado) por si se quieren
     inspeccionar o guardar.
     """
-    factores = list(factores) if factores is not None else list(FACTORES_DEFAULT)
+    factores = list(factores) if factores is not None else list(
+        FACTORES_DEFAULT)
 
     exposiciones_por_fecha, estadisticas_por_fecha = construir_exposiciones_rolling(
         rendimientos, factores_df, factores=factores, ventana_beta=ventana_beta,
@@ -223,7 +232,8 @@ def backtest_modelo(
         exposiciones_por_fecha, estadisticas_por_fecha, factores_df,
         factores=factores, ventana_factor=ventana_factor, rezago_factor=rezago_factor,
     )
-    ic_df = calcular_ic_serie(rendimiento_esperado, rendimiento_real, min_acciones=min_acciones_ic)
+    ic_df = calcular_ic_serie(rendimiento_esperado,
+                              rendimiento_real, min_acciones=min_acciones_ic)
     resumen = resumen_ic(ic_df)
 
     return {

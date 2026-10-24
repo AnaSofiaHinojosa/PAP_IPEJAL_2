@@ -7,7 +7,7 @@ from estimar_exposiciones import (
     VALOR_RESTRICCION_DEFAULT,
 )
 
-PISO_SENAL = 0.05 # la varianza "verdadera" entre acciones no baja de 5% de la observada
+PISO_SENAL = 0.05  # la varianza "verdadera" entre acciones no baja de 5% de la observada
 MODOS_PESO = ("ic_var", "ic_ratio")
 
 
@@ -35,7 +35,8 @@ def _errores_una_accion(y: np.ndarray, X: np.ndarray, idx_base: int | None,
     cov = s2 * np.linalg.pinv(A.T @ A)
 
     if restringir_suma:
-        cov_g = cov[1:, 1:]                       # covarianza de los gamma (betas de los otros factores)
+        # covarianza de los gamma (betas de los otros factores)
+        cov_g = cov[1:, 1:]
         se = np.empty(p)
         se[otros] = np.sqrt(np.clip(np.diag(cov_g), 0.0, None))
         # beta_base = valor - sum(gamma)  ->  Var = 1' Cov(gamma) 1
@@ -115,17 +116,21 @@ def encoger_exposiciones(
 
     # Varianza observada entre acciones de cada beta = señal + ruido de estimación
     var_cs = betas.var(axis=0, ddof=1)
-    tau2 = np.maximum(var_cs - se2.mean(axis=0), piso * var_cs)   # señal "verdadera"
+    tau2 = np.maximum(var_cs - se2.mean(axis=0), piso *
+                      var_cs)   # señal "verdadera"
 
     # Cociente ruido/señal de cada acción, promediado sobre los factores
     q = se2.div(tau2, axis=1).mean(axis=1, skipna=False)
     lam = 1.0 / (1.0 + kappa * q)
-    lam = lam.where(q.notna(), 1.0)                       # sin error estándar -> sin encogimiento
-    lam = lam.where(betas.notna().all(axis=1))            # sin beta válido -> NaN
+    # sin error estándar -> sin encogimiento
+    lam = lam.where(q.notna(), 1.0)
+    # sin beta válido -> NaN
+    lam = lam.where(betas.notna().all(axis=1))
 
     centro = betas.mean(axis=0)
     lam_v = lam.to_numpy()[:, None]
-    encogidos = lam_v * betas.to_numpy() + (1.0 - lam_v) * centro.to_numpy()[None, :]
+    encogidos = lam_v * betas.to_numpy() + (1.0 - lam_v) * \
+        centro.to_numpy()[None, :]
     return pd.DataFrame(encogidos, index=betas.index, columns=betas.columns), lam
 
 

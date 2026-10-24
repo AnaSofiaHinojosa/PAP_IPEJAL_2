@@ -5,7 +5,8 @@ import generar_matriz as gm
 from estimar_exposiciones import estimar_matriz_exposiciones
 
 SALIDA = Path("salidas/exposiciones_sin_restriccion_sin_estandarizar")
-MATRIZ_MODELO_3 = Path("salidas/exposiciones_sin_estandarizar/matriz_exposiciones.csv")
+MATRIZ_MODELO_3 = Path(
+    "salidas/exposiciones_sin_estandarizar/matriz_exposiciones.csv")
 RESTRINGIR_SUMA = False     # <- como el modelo 2
 ESTANDARIZAR = False        # <- como el modelo 3
 ESTANDARIZAR_Y = False      # <- como el modelo 3
@@ -27,15 +28,18 @@ def main():
     print(f"  rendimientos de: {archivo_rend}")
     rendimientos = gm.cargar_rendimientos(gm.REGRESION / archivo_rend)
     factores_df = gm.cargar_factores(gm.REGRESION / "factores.csv")
-    print(f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
+    print(
+        f"  {rendimientos.shape[1]} empresas, {rendimientos.shape[0]} meses de rendimientos")
 
     faltan = [f for f in gm.FACTORES if f not in factores_df.columns]
     if faltan:
         raise ValueError(f"Faltan factores en factores.csv: {faltan}")
 
-    rendimientos, factores_df = gm.recortar_ventana(rendimientos, factores_df, gm.VENTANA_MESES)
+    rendimientos, factores_df = gm.recortar_ventana(
+        rendimientos, factores_df, gm.VENTANA_MESES)
 
-    print(f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
+    print(
+        f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
     print("\nEstimando exposiciones (MCO sin restricción de suma, factores crudos)...")
     matriz = estimar_matriz_exposiciones(
         rendimientos=rendimientos,
@@ -82,7 +86,7 @@ def main():
         ("Ventana", "Todo el historial disponible" if not gm.VENTANA_MESES
                     else f"Últimos {gm.VENTANA_MESES} meses"),
         ("Mínimo de observaciones", f"{gm.MIN_OBS} meses con dato simultáneo en "
-                                    "la acción y en todos los factores"),
+         "la acción y en todos los factores"),
         ("Estandarización", "Ninguna: factores y rendimientos en exceso en unidades de "
                             "rendimiento mensual"),
         ("Datos de entrenamiento", "Todo el historial de precios de cada empresa (rendimientos.csv)"
