@@ -19,7 +19,7 @@ N_CUANTILES = 5              # quintiles para la tabla por cuantiles
 # costo por cada 100% operado, en puntos base (0 = sin costos)
 COSTO_BPS = 10.0
 VENTANA_SHARPE_MOVIL = 36    # meses
-# ej. (1, "B") para forzar un modelo; None = el mejor global
+# Lo siguiente es para forzar un modelo específico (número, versión) en vez de usar el mejor global
 MODELO_MANUAL = None
 
 # Nombres de las estrategias en las tablas
@@ -60,10 +60,9 @@ def cargar_rendimiento_esperado(num: int, version: str) -> pd.DataFrame:
     er = pd.read_csv(ruta, index_col=0, parse_dates=True)
     return er.sort_index()
 
-
-# ====================================================================== #
 # Construcción de los portafolios mes a mes
-# ====================================================================== #
+
+
 def construir_portafolios(er: pd.DataFrame, real: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Regresa (retornos mensuales, posiciones).
 
@@ -124,10 +123,9 @@ def construir_portafolios(er: pd.DataFrame, real: pd.DataFrame) -> tuple[pd.Data
         ret["costo_corto"]       # P&L de estar corto
     return ret, pd.DataFrame(posiciones)
 
-
-# ====================================================================== #
 # Tablas
-# ====================================================================== #
+
+
 def tabla_cuantiles(er: pd.DataFrame, real: pd.DataFrame, n_q: int) -> pd.DataFrame:
     """Rendimiento real promedio por cuantil del rendimiento esperado
     (cuantil 1 = menor esperado, cuantil n_q = mayor esperado)."""
@@ -190,9 +188,8 @@ def comparacion_vs_pasivas(estrategias: pd.DataFrame, excesos: pd.DataFrame) -> 
     return pd.DataFrame(filas)
 
 
-# ====================================================================== #
 # Gráfico
-# ====================================================================== #
+
 def graficar(estrategias: pd.DataFrame, excesos: pd.DataFrame, ruta: Path, titulo: str):
     try:
         import matplotlib

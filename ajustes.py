@@ -96,7 +96,7 @@ def errores_estandar_exposiciones(
     return pd.DataFrame.from_dict(filas, orient="index", columns=factores).sort_index()
 
 
-# (2) Shrinkage de los betas
+# (2) Shrinkage de las betas
 def encoger_exposiciones(
     betas: pd.DataFrame,
     errores: pd.DataFrame,
