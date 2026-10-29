@@ -8,8 +8,6 @@ from metricas_desempeno import (
     curva_capital, serie_drawdown, t_stat_media, treynor, MESES_ANIO,
 )
 
-# holaaa
-
 REGRESION = Path("salidas/regresion")
 CALIBRACION = Path("salidas/calibracion")
 SALIDA_RAIZ = Path("salidas/estrategia")
