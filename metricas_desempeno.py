@@ -140,3 +140,10 @@ def sharpe_movil(exceso: pd.Series, ventana: int = 36) -> pd.Series:
     media = exceso.rolling(ventana).mean()
     desv = exceso.rolling(ventana).std(ddof=1)
     return (media / desv * np.sqrt(MESES_ANIO)).where(desv > 0)
+
+
+def treynor(exceso: pd.Series, beta: float) -> float:
+    """Treynor anualizado: rendimiento en exceso medio / beta."""
+    if len(exceso) == 0 or beta is None or np.isnan(beta) or beta == 0:
+        return np.nan
+    return float(exceso.mean() * MESES_ANIO / beta)

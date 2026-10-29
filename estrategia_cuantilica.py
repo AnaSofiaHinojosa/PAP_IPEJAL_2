@@ -5,12 +5,12 @@ import pandas as pd
 from optimizar_modelos import cargar_rendimientos, cargar_factores
 from metricas_desempeno import (
     resumen_metricas, comparar_pareado, sharpe_clasico, sharpe_movil,
-    curva_capital, serie_drawdown, t_stat_media, MESES_ANIO,
+    curva_capital, serie_drawdown, t_stat_media, treynor, MESES_ANIO,
 )
 
 REGRESION = Path("salidas/regresion")
 CALIBRACION = Path("salidas/calibracion")
-SALIDA = Path("salidas/estrategia")
+SALIDA_RAIZ = Path("salidas/estrategia")
 
 # Parámetros ajustables
 N_LARGO = 20                 # acciones largas (mayor rendimiento esperado)
@@ -19,7 +19,8 @@ N_CUANTILES = 5              # quintiles para la tabla por cuantiles
 # costo por cada 100% operado, en puntos base (0 = sin costos)
 COSTO_BPS = 10.0
 VENTANA_SHARPE_MOVIL = 36    # meses
-# Lo siguiente es para forzar un modelo específico (número, versión) en vez de usar el mejor global
+# Si se deja en None, se corren TODOS los modelos de finalistas_12_mismas_fechas.csv.
+# Si se pone (num, version), se corre SOLO ese modelo (útil para pruebas rápidas).
 MODELO_MANUAL = None
 
 # Nombres de las estrategias en las tablas
@@ -31,24 +32,26 @@ PASIVA_EW = "Pasiva: Top 100 igual ponderado"
 PASIVA_SP = "Pasiva: S&P 500"
 
 
-# Selección del modelo
+# Selección del/los modelo(s)
 
-def leer_mejor_modelo() -> tuple[int, str, str]:
-    """(número de modelo, versión, descripción) del mejor modelo global."""
+def leer_modelos_a_correr() -> list[tuple[int, str, str, bool]]:
+    """Lista de (número de modelo, versión, descripción, es_mejor_global) a correr.
+
+    Si MODELO_MANUAL está definido, regresa solo ese. Si no, regresa TODAS las
+    filas de finalistas_12_mismas_fechas.csv (no solo la marcada mejor_global)."""
     if MODELO_MANUAL is not None:
         num, version = MODELO_MANUAL
-        return int(num), str(version), "(forzado con MODELO_MANUAL)"
+        return [(int(num), str(version), "(forzado con MODELO_MANUAL)", True)]
     archivo = CALIBRACION / "finalistas_12_mismas_fechas.csv"
     if not archivo.exists():
         raise FileNotFoundError(
             f"No encontré {archivo}. Corre primero calibrar_modelos.py.")
     df = pd.read_csv(archivo)
-    marcado = df[df["mejor_global"].astype(str).str.lower().eq("true")]
-    if marcado.empty:
-        raise RuntimeError(
-            f"{archivo} no tiene ningún modelo con mejor_global = True.")
-    fila = marcado.iloc[0]
-    return int(fila["modelo"]), str(fila["version"]), str(fila["parametros"])
+    es_mejor = df["mejor_global"].astype(str).str.lower().eq("true")
+    return [
+        (int(fila["modelo"]), str(fila["version"]), str(fila["parametros"]), bool(mejor))
+        for (_, fila), mejor in zip(df.iterrows(), es_mejor)
+    ]
 
 
 def cargar_rendimiento_esperado(num: int, version: str) -> pd.DataFrame:
@@ -95,7 +98,7 @@ def construir_portafolios(er: pd.DataFrame, real: pd.DataFrame) -> tuple[pd.Data
             "n_universo": len(u),
             "er_largo": largo["er"].mean(),
             "er_corto": corto["er"].mean(),
-            # rendimiento esperado ex-ante
+            # rendimiento esperado
             "er_largo_corto": largo["er"].mean() - corto["er"].mean(),
             "ret_largo": ret_largo,
             "ret_corto": ret_corto,
@@ -168,7 +171,15 @@ def metricas_de_todas(estrategias: pd.DataFrame, excesos: pd.DataFrame, mercado_
     for nombre in estrategias.columns:
         filas[nombre] = resumen_metricas(
             estrategias[nombre], excesos[nombre], mercado_exceso)
-    return pd.DataFrame(filas).T.rename_axis("estrategia")
+    df = pd.DataFrame(filas).T.rename_axis("estrategia")
+    if "beta_mercado" in df.columns:
+        df["treynor"] = [
+            treynor(excesos[nombre], df.loc[nombre, "beta_mercado"])
+            for nombre in df.index
+        ]
+    else:
+        df["treynor"] = np.nan
+    return df
 
 
 def comparacion_vs_pasivas(estrategias: pd.DataFrame, excesos: pd.DataFrame) -> pd.DataFrame:
@@ -243,6 +254,8 @@ def definiciones() -> pd.DataFrame:
                            "le resta rf porque se autofinancia; a las demás sí"),
         ("alpha_anual / beta_mercado",
          "Regresión del exceso de la estrategia contra el exceso del S&P 500"),
+        ("treynor",
+         "Rendimiento en exceso medio anualizado / beta_mercado"),
         ("dif_media_anualizada / t_stat_dif",
          "Diferencia mensual contra la pasiva (x12) y su t pareada"),
         ("Cuantiles",
@@ -252,17 +265,20 @@ def definiciones() -> pd.DataFrame:
     ], columns=["concepto", "definición"])
 
 
-# Programa principal
-def main():
-    SALIDA.mkdir(parents=True, exist_ok=True)
+# Corre la estrategia completa para UN modelo
 
-    num, version, descr = leer_mejor_modelo()
+def correr_modelo(num: int, version: str, descr: str, es_mejor_global: bool,
+                   real: pd.DataFrame, factores: pd.DataFrame) -> dict:
     nombre_modelo = f"Modelo {num}, versión {version}"
-    print(f"Mejor modelo de la calibración: {nombre_modelo}  ({descr})")
+    etiqueta_carpeta = f"modelo{num}_{version}" + \
+        ("_mejor_global" if es_mejor_global else "")
+    salida = SALIDA_RAIZ / etiqueta_carpeta
+    salida.mkdir(parents=True, exist_ok=True)
+
+    print(f"\n{'-' * 100}\n{nombre_modelo}  ({descr})"
+          f"{'  <-- mejor_global' if es_mejor_global else ''}\n{'-' * 100}")
 
     er = cargar_rendimiento_esperado(num, version)
-    real = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
-    factores = cargar_factores(REGRESION / "factores.csv")
     print(f"  rendimiento esperado: {er.index.min():%Y-%m} a {er.index.max():%Y-%m}, "
           f"{er.shape[1]} acciones")
 
@@ -340,17 +356,17 @@ def main():
     salida_ret["rf"] = rf
     if PASIVA_SP in estrategias.columns:
         salida_ret["pasiva_sp500"] = estrategias[PASIVA_SP]
-    salida_ret.rename_axis("fecha").to_csv(SALIDA / "retornos_mensuales.csv")
-    pos.to_csv(SALIDA / "posiciones.csv", index=False)
-    metricas.to_csv(SALIDA / "resumen_metricas.csv")
-    comparacion.to_csv(SALIDA / "comparacion_vs_pasivas.csv", index=False)
-    anual.to_csv(SALIDA / "por_anio.csv")
-    subperiodos.to_csv(SALIDA / "subperiodos.csv", index=False)
-    cuantiles.to_csv(SALIDA / "cuantiles.csv")
+    salida_ret.rename_axis("fecha").to_csv(salida / "retornos_mensuales.csv")
+    pos.to_csv(salida / "posiciones.csv", index=False)
+    metricas.to_csv(salida / "resumen_metricas.csv")
+    comparacion.to_csv(salida / "comparacion_vs_pasivas.csv", index=False)
+    anual.to_csv(salida / "por_anio.csv")
+    subperiodos.to_csv(salida / "subperiodos.csv", index=False)
+    cuantiles.to_csv(salida / "cuantiles.csv")
     pd.DataFrame({n: sharpe_movil(excesos[n], VENTANA_SHARPE_MOVIL) for n in excesos.columns}) \
-        .rename_axis("fecha").to_csv(SALIDA / "sharpe_movil_36m.csv")
+        .rename_axis("fecha").to_csv(salida / "sharpe_movil_36m.csv")
 
-    with pd.ExcelWriter(SALIDA / "estrategia.xlsx", engine="openpyxl") as xw:
+    with pd.ExcelWriter(salida / "estrategia.xlsx", engine="openpyxl") as xw:
         pd.DataFrame({"modelo": [nombre_modelo], "configuracion": [descr], "N_largo": [N_LARGO],
                       "N_corto": [N_CORTO], "costo_bps": [COSTO_BPS]}).to_excel(xw, sheet_name="Modelo_usado", index=False)
         metricas.to_excel(xw, sheet_name="Metricas")
@@ -364,34 +380,61 @@ def main():
             xw, sheet_name="Retornos_mensuales")
         definiciones().to_excel(xw, sheet_name="Definiciones", index=False)
 
-    graficar(estrategias, excesos, SALIDA /
+    graficar(estrategias, excesos, salida /
              "estrategia_cuantilica.png", nombre_modelo)
+
+    ls = metricas.loc[LS_NETO]
+    print(f"  Largo-Corto neto: Sharpe clásico = {ls['sharpe_clasico']:.2f}, "
+          f"rendimiento anualizado = {ls['retorno_anualizado']:.2%}, "
+          f"max drawdown = {ls['max_drawdown']:.2%}, "
+          f"Treynor = {ls['treynor']:.4f}")
+    print(f"  Resultados completos en {salida}")
+
+    fila_resumen = {
+        "modelo": num, "version": version, "parametros": descr,
+        "mejor_global": es_mejor_global, "carpeta": str(salida),
+    }
+    fila_resumen.update({f"{LS_NETO}__{c}": metricas.loc[LS_NETO, c]
+                          for c in metricas.columns})
+    return fila_resumen
+
+
+# Programa principal
+def main():
+    SALIDA_RAIZ.mkdir(parents=True, exist_ok=True)
+
+    real = cargar_rendimientos(REGRESION / "rendimientos_miembros.csv")
+    factores = cargar_factores(REGRESION / "factores.csv")
+
+    modelos = leer_modelos_a_correr()
+    print(f"Se van a correr {len(modelos)} modelo(s).")
 
     pd.set_option("display.width", 220)
     pd.set_option("display.max_columns", 30)
-    cols = ["n_meses", "retorno_anualizado", "vol_anual", "sharpe_clasico", "sortino",
-            "max_drawdown", "calmar", "hit_rate", "alpha_anual", "beta_mercado"]
-    cols = [c for c in cols if c in metricas.columns]
-    print(f"\n{'=' * 100}\nDesempeño ({nombre_modelo}, N largo = {N_LARGO}, N corto = {N_CORTO}, "
-          f"costo = {COSTO_BPS:g} pb)\n{'=' * 100}")
-    print(metricas[cols].round(4).to_string())
 
-    print(
-        f"\n{'=' * 100}\nRendimiento esperado vs realizado del largo-corto\n{'=' * 100}")
-    print(esperado.T.round(4).to_string(header=False))
+    resumenes = []
+    for num, version, descr, es_mejor_global in modelos:
+        try:
+            resumenes.append(correr_modelo(
+                num, version, descr, es_mejor_global, real, factores))
+        except FileNotFoundError as e:
+            print(f"  AVISO: se omite Modelo {num} versión {version}: {e}")
 
-    print(f"\n{'=' * 100}\nComparación contra estrategias pasivas\n{'=' * 100}")
-    print(comparacion.round(4).to_string(index=False))
+    if not resumenes:
+        raise RuntimeError("No se pudo correr ningún modelo.")
 
-    print(
-        f"\n{'=' * 100}\nRendimiento real por quintil del rendimiento esperado\n{'=' * 100}")
-    print(cuantiles.round(4).to_string())
+    comparacion_modelos = pd.DataFrame(resumenes).sort_values(
+        f"{LS_NETO}__sharpe_clasico", ascending=False)
+    comparacion_modelos.to_csv(
+        SALIDA_RAIZ / "resumen_todos_los_modelos.csv", index=False)
 
-    ls = metricas.loc[LS_NETO]
-    print(f"\nLargo-Corto neto: Sharpe clásico = {ls['sharpe_clasico']:.2f}, "
-          f"rendimiento anualizado = {ls['retorno_anualizado']:.2%}, "
-          f"max drawdown = {ls['max_drawdown']:.2%}")
-    print(f"\nResultados completos en {SALIDA}")
+    cols = ["modelo", "version", "mejor_global",
+            f"{LS_NETO}__sharpe_clasico", f"{LS_NETO}__treynor",
+            f"{LS_NETO}__retorno_anualizado", f"{LS_NETO}__max_drawdown"]
+    cols = [c for c in cols if c in comparacion_modelos.columns]
+    print(f"\n{'=' * 100}\nComparación de todos los modelos (Largo-Corto neto, ordenado por Sharpe)\n{'=' * 100}")
+    print(comparacion_modelos[cols].round(4).to_string(index=False))
+    print(f"\nResumen completo en {SALIDA_RAIZ / 'resumen_todos_los_modelos.csv'}")
 
 
 if __name__ == "__main__":
