@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="1e67bb00-52dd-497c-b868-e1d122f99fb6" name="Changes" comment="Relleno de huecos de datos y estandarización de rendimientos">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2006.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2007.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2008.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2009.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2010.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2011.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2012.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2013.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2014.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2015.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2016.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2017.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2018.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2019.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2020.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2021.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2022.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2023.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2024.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/2025.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Data/holdings-daily-us-en-spy.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Datos.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Diagnostico.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Validar Salidas.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backtesting.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/construir_factores.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/estimar_exposiciones.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/estimar_rendimiento.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generar_matriz.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/generar_rendimientos.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimizar_modelos.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/revision_top100_anual.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/comparacion_modelos.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/comparacion_modelos.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2012-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2013-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2014-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2015-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2016-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2017-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2018-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2019-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2020-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2021-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2022-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2023-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2024-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2025-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_exposiciones/2026-01.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_ic_serie.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/backtesting/mejor_modelo_rendimiento_esperado.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AAPL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ABBV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ABT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ACN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ADBE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ADI.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ADP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AFL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AIG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AMAT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AMD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AMGN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AMT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AMZN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ANET.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/APA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/APD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/APH.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/APP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AVGO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/AXP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BAC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BAX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BDX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BIIB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BKNG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BLK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BMY.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BNY.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BRK-B.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BSX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/BX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/C.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CAT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CCI.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CHTR.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CI.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CMCSA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CME.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/COF.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/COP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/COST.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CRM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CRWD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CSCO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CSX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CVS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/CVX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/D.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DELL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DHR.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DIS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DUK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/DVN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/EBAY.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ELV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/EMR.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/EOG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/EQIX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ETN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/EXC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/F.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/FCX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/FDX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/FIS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/FISV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GEV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GILD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GIS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GLW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GOOGL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/GS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/HAL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/HD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/HON.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/HOOD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/HPQ.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/IBM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/INTC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/INTU.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ISRG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ITW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/JNJ.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/JPM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/KHC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/KLAC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/KMB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/KMI.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/KO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LIN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LLY.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LMT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LOW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LRCX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/LYB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MCD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MCK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MDLZ.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MDT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MET.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/META.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MMM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MPC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MRK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MRNA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MRSH.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MRVL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MSFT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/MU.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NEE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NEM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NFLX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NKE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NOC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NOV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NOW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/NVDA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ORCL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/OXY.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PANW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PEP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PFE.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PGR.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PH.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PLD.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PLTR.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PNC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PRU.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PSX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/PYPL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/QCOM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/REGN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/RTX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SBUX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SCHW.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SLB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SNDK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SPG.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SPGI.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/STX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/SYK.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/T.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TFC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TGT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TJX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TMO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TMUS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TRV.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TSLA.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/TXN.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/UBER.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/UNH.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/UNP.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/UPS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/USB.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/V.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/VLO.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/VRTX.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/VZ.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/WDC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/WELL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/WFC.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/WMT.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/XOM.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas/ZTS.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/empresas_anteriores/~$AFL.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/exposiciones/factores_estandarizacion.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/exposiciones/matriz_exposiciones.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/exposiciones/matriz_exposiciones.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/mercado.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/caracteristicas.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/factores.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/insumos_regresion.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/membresia.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/rendimientos.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/regresion/rendimientos_miembros.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/rendimientos_esperados/rendimientos_esperados.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/rendimientos_esperados/rendimientos_esperados_ventana12.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/rendimientos_esperados/rendimientos_esperados_ventana3.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/rendimientos_esperados/rendimientos_esperados_ventana6.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/reporte_cobertura_edgar.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/reporte_errores.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/resumen_universo.xlsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/salidas/revision_precios_vs_top100.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/sec_edgar_fundamentals.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/seleccion_anual_top100.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/top100.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/universo_final_top100_global.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/universo_sp500.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/universo_sp500_completo.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/yahoo_factor_data.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="Sofía" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;DanielaCamila&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/AnaSofiaHinojosa/PAP_IPEJAL_2.git&quot;,
+    &quot;accountId&quot;: &quot;21e4c5f2-ea48-45c7-99fb-9158af99c7b2&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2
+}</component>
+  <component name="ProjectId" id="3JNrhZnnUzNEVHyH8b8CikU32Ub" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.Comparar con Yahoo.executor": "Run",
+    "Python.Diagnostico.executor": "Run",
+    "Python.Prueba 2.0.executor": "Run",
+    "Python.Survivor_Bias.executor": "Run",
+    "Python.Validar Salidas.executor": "Run",
+    "Python.construir_factores.executor": "Run",
+    "Python.estimar_exposiciones.executor": "Run",
+    "Python.generar_matriz.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.optimizar_modelos.executor": "Run",
+    "Python.prueba.executor": "Run",
+    "Python.prueba_factset.executor": "Run",
+    "Python.prueba_r2.executor": "Run",
+    "Python.revisar_cobertura_minobs.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "Camila",
+    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\52332\Downloads\PAP_IPEJAL_2" />
+      <recent name="C:\Users\52332\Downloads\PAP_IPEJAL_2\Data" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-b3d66beaba9a-c6efb3732140-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-252.26199.168" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="1e67bb00-52dd-497c-b868-e1d122f99fb6" name="Changes" comment="" />
+      <created>1789512490097</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1789512490097</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Correción de selección de los 100 activos del S&amp;P500 y el código para a creación de los factores">
+      <option name="closed" value="true" />
+      <created>1790278435906</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1790278435906</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Modificación de selección de modelo">
+      <option name="closed" value="true" />
+      <created>1792025238557</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1792025238557</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Relleno de huecos de datos y estandarización de rendimientos">
+      <option name="closed" value="true" />
+      <created>1792127794080</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1792127794080</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Relleno de huecos de datos y estandarización de rendimientos">
+      <option name="closed" value="true" />
+      <created>1792128103998</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1792128103998</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="origin/main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/main" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Correción de selección de los 100 activos del S&amp;P500 y el código para a creación de los factores" />
+    <MESSAGE value="archivos temporales" />
+    <MESSAGE value="Archivos prueba no importantes" />
+    <MESSAGE value="Modificación de selección de modelo" />
+    <MESSAGE value="Relleno de huecos de datos y estandarización de rendimientos" />
+    <option name="LAST_COMMIT_MESSAGE" value="Relleno de huecos de datos y estandarización de rendimientos" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/sec_edgar_fundamentals.py</url>
+          <line>889</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/sec_edgar_fundamentals.py</url>
+          <line>897</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
