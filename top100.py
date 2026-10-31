@@ -1,18 +1,3 @@
-"""
-top100.py - Selección ANUAL del universo (regla del profesor, versión 2):
-
-  Cada año de tenencia A, se toman las empresas que estaban en el S&P 500
-  al cierre del año anterior (31/12/A-1) y se escogen las 100 con mayor
-  market cap en esa fecha. Ese grupo se mantiene todo el año A. Cuenta
-  cualquier empresa que haya estado en el índice, aunque después la
-  hayan comprado, haya quebrado o haya salido del índice a los pocos meses.
-
-  Fuentes (Datos.py):
-    - FactSet Screening (SP500_AAAA.xlsx): market cap al 31/12 y Perm. ID.
-    - Holdings del SPY por año (Kaggle + State Street): el peso en el SPY es
-      proporcional al market cap ajustado por flotación, así que ordena igual.
-"""
-
 import pandas as pd
 
 import re
@@ -43,18 +28,29 @@ EQUIVALENCIAS_MANUALES = {
     # --- misma empresa, cambió de nombre / ticker ---------------------
     "Google, Inc (Class A)": "GOOGL",            # Google -> Alphabet (2015)
     "WellPoint, Inc": "ELV",                      # WellPoint -> Anthem -> Elevance
-    "United Technologies Corp": "RTX",            # UTX -> RTX (2020); la fuente dice UAL
-    "Kraft Foods, Inc (Class A)": "MDLZ",         # Kraft Foods -> Mondelez (2012); la fuente dice KHC
-    "Wal-Mart Stores, Inc": "WMT",                # Wal-Mart Stores -> Walmart Inc (2018)
-    "Bank of New York Mellon Corp": "BNY",        # BNY Mellon cambió de ticker BK -> BNY
-    "Thermo Electron Corp": "TMO",                # Thermo Electron -> Thermo Fisher (2006); la fuente dice AVT
-    "Ingersoll-Rand Co, Ltd (Class A)": "TT",     # Ingersoll-Rand -> Trane Technologies (2020); la fuente dice IR
-    "CVS Caremark Corp": "CVS",                   # CVS Caremark -> CVS Health (2014)
+    # UTX -> RTX (2020); la fuente dice UAL
+    "United Technologies Corp": "RTX",
+    # Kraft Foods -> Mondelez (2012); la fuente dice KHC
+    "Kraft Foods, Inc (Class A)": "MDLZ",
+    # Wal-Mart Stores -> Walmart Inc (2018)
+    "Wal-Mart Stores, Inc": "WMT",
+    # BNY Mellon cambió de ticker BK -> BNY
+    "Bank of New York Mellon Corp": "BNY",
+    # Thermo Electron -> Thermo Fisher (2006); la fuente dice AVT
+    "Thermo Electron Corp": "TMO",
+    # Ingersoll-Rand -> Trane Technologies (2020); la fuente dice IR
+    "Ingersoll-Rand Co, Ltd (Class A)": "TT",
+    # CVS Caremark -> CVS Health (2014)
+    "CVS Caremark Corp": "CVS",
     "Schlumberger, Ltd": "SLB",                   # Schlumberger -> SLB (2022)
-    "FPL Group, Inc": "NEE",                      # FPL Group -> NextEra Energy (2010)
-    "McGraw-Hill Cos, Inc": "SPGI",               # McGraw-Hill -> S&P Global (2016)
-    "Praxair, Inc": "LIN",                        # Praxair + Linde AG -> Linde plc (2018). DECIDIR (nuevo CIK)
-    "Hewlett-Packard Co": "HPQ",                  # HP Co -> HP Inc (2015, HPE se escindió)
+    # FPL Group -> NextEra Energy (2010)
+    "FPL Group, Inc": "NEE",
+    # McGraw-Hill -> S&P Global (2016)
+    "McGraw-Hill Cos, Inc": "SPGI",
+    # Praxair + Linde AG -> Linde plc (2018). DECIDIR (nuevo CIK)
+    "Praxair, Inc": "LIN",
+    # HP Co -> HP Inc (2015, HPE se escindió)
+    "Hewlett-Packard Co": "HPQ",
     "Dominion Resources, Inc": "D",               # -> Dominion Energy (2017)
     "AmerisourceBergen Corp": "COR",              # -> Cencora (2023)
     "Franklin Resources, Inc": "BEN",             # -> Franklin Templeton
@@ -70,16 +66,21 @@ EQUIVALENCIAS_MANUALES = {
     "PerkinElmer, Inc": "RVTY",                   # -> Revvity (2023)
     "Tyco Electronics, Ltd": "TEL",               # -> TE Connectivity
     # fusiones donde la fuente eligió mal cuál empresa sobrevive:
-    "BB&T Corp": "TFC",                           # BB&T (sucesora legal) -> Truist
-    "Stanley Works": "SWK",                       # Stanley (compradora) -> Stanley Black & Decker
-    "ACE, Ltd": "CB",                             # ACE compró a Chubb y tomó su nombre (2016)
+    # BB&T (sucesora legal) -> Truist
+    "BB&T Corp": "TFC",
+    # Stanley (compradora) -> Stanley Black & Decker
+    "Stanley Works": "SWK",
+    # ACE compró a Chubb y tomó su nombre (2016)
+    "ACE, Ltd": "CB",
     "Coach, Inc": "TPR",                          # Coach -> Tapestry (2017)
-    "Tyco International, Ltd": "JCI",             # Tyco (sucesora legal) compró a Johnson Controls (2016)
+    # Tyco (sucesora legal) compró a Johnson Controls (2016)
+    "Tyco International, Ltd": "JCI",
 
     # --- compradas / desaparecidas: sin fuente en Yahoo (SIN_FUENTE) ---
     "Merrill Lynch & Co, Inc": None,              # BAC (2009)
     "Wachovia Corp": None,                        # WFC (2008)
-    "Washington Mutual, Inc": None,               # quebró; activos a JPM (2008)
+    # quebró; activos a JPM (2008)
+    "Washington Mutual, Inc": None,
     "Schering-Plough Corp": None,                 # MRK (2009)
     "Wyeth": None,                                # PFE (2009)
     "Marathon Oil Corp": None,                    # COP (2024)
@@ -87,48 +88,68 @@ EQUIVALENCIAS_MANUALES = {
     "Sprint Nextel Corp": None,                   # T-Mobile (2020)
     "Time Warner, Inc": None,                     # AT&T (2018)
     "Monsanto Co": None,                          # Bayer (2018)
-    "Burlington Northern Santa Fe Corp": None,    # Berkshire (2010); la fuente dice BRK.B
-    "Forest Laboratories, Inc": None,             # Actavis -> AbbVie; la fuente dice ABBV
+    # Berkshire (2010); la fuente dice BRK.B
+    "Burlington Northern Santa Fe Corp": None,
+    # Actavis -> AbbVie; la fuente dice ABBV
+    "Forest Laboratories, Inc": None,
     "Novellus Systems, Inc": None,                # Lam Research (2012)
-    "Applera Corp -- Applied Biosystems Group": None,  # Life Tech -> Thermo (2014)
+    # Life Tech -> Thermo (2014)
+    "Applera Corp -- Applied Biosystems Group": None,
     "QLogic Corp": None,                          # Cavium -> Marvell
-    "SanDisk Corp": None,                         # Western Digital (2016); ver EQUIVALENCIAS_HASTA
+    # Western Digital (2016); ver EQUIVALENCIAS_HASTA
+    "SanDisk Corp": None,
     "Tesoro Corp": None,                          # Marathon Petroleum (2018)
     "Coventry Health Care, Inc": None,            # Aetna (2013)
-    "American Standard Cos, Inc": None,           # Trane Inc -> Ingersoll-Rand (2008)
+    # Trane Inc -> Ingersoll-Rand (2008)
+    "American Standard Cos, Inc": None,
     "Juniper Networks, Inc": None,                # HPE (2025)
-    "Hilton Hotels Corp": None,                   # Blackstone (2007); HLT actual es otra sociedad
-    "SunTrust Banks, Inc": None,                  # fusión con BB&T (BB&T sucesora legal)
+    # Blackstone (2007); HLT actual es otra sociedad
+    "Hilton Hotels Corp": None,
+    # fusión con BB&T (BB&T sucesora legal)
+    "SunTrust Banks, Inc": None,
     "Black & Decker Corp": None,                  # Stanley Works (2010)
     "Chubb Corp": None,                           # comprada por ACE (2016)
-    "Johnson Controls, Inc": None,                # comprada por Tyco (2016), que tomó el nombre JCI
+    # comprada por Tyco (2016), que tomó el nombre JCI
+    "Johnson Controls, Inc": None,
     "Family Dollar Stores, Inc": None,            # Dollar Tree (2015)
     "Citizens Communications Co": None,           # -> Frontier; CFG es otro banco
-    "L-3 Communications Holdings, Inc": None,     # Harris (sucesora legal) -> L3Harris
+    # Harris (sucesora legal) -> L3Harris
+    "L-3 Communications Holdings, Inc": None,
     "Dow Jones & Co, Inc": None,                  # News Corp (2007)
     "El Paso Corp": None,                         # Kinder Morgan (2012)
     "Allied Waste Industries, Inc": None,         # Republic Services (2008)
     "TXU Corp": None,                             # LBO (2007)
     "Solectron Corp": None,                       # Flextronics (2007)
-    "IMS Health, Inc": None,                      # Quintiles (sucesora legal) -> IQVIA
+    # Quintiles (sucesora legal) -> IQVIA
+    "IMS Health, Inc": None,
     "Integrys Energy Group, Inc": None,           # WEC (2015)
-    "Liz Claiborne, Inc": None,                   # -> Kate Spade -> Tapestry (2017)
+    # -> Kate Spade -> Tapestry (2017)
+    "Liz Claiborne, Inc": None,
     "Novell, Inc": None,
     "CA, Inc": None,                              # Broadcom (2018)
-    "CBS Corp (Class B)": None,                   # Skydance (2025): Paramount Skydance es otra sociedad
+    # Skydance (2025): Paramount Skydance es otra sociedad
+    "CBS Corp (Class B)": None,
     "Precision Castparts Corp": None,             # Berkshire (2016)
     "Allergan, Inc": None,                        # Actavis -> AbbVie
     "LSI Logic Corp": None,                       # Avago (2014)
-    "Dynegy, Inc (Class A)": None,                # Vistra (sucesora legal, 2018)
+    # Vistra (sucesora legal, 2018)
+    "Dynegy, Inc (Class A)": None,
     "Viacom, Inc (Class B)": None,                # CBS (sucesora legal, 2019)
-    "HJ Heinz Co": None,                          # 3G/Berkshire (2013); KHC es otra sociedad
-    "Mylan Laboratories, Inc": None,              # Upjohn (sucesora legal) -> Viatris
+    # 3G/Berkshire (2013); KHC es otra sociedad
+    "HJ Heinz Co": None,
+    # Upjohn (sucesora legal) -> Viatris
+    "Mylan Laboratories, Inc": None,
     # --- mismo nombre/ticker pero OTRA empresa (el nombre engaña) -------
-    "Broadcom Corp (Class A)": None,              # comprada por Avago (2016), que tomó el nombre
-    "Constellation Energy Group, Inc": None,      # comprada por Exelon (2012); CEG actual = escisión 2022
-    "Apollo Group, Inc (Class A)": None,          # Univ. of Phoenix; APO actual = Apollo Global Mgmt
-    "Cooper Industries, Ltd (Class A)": None,     # comprada por Eaton (2012); COO = Cooper Companies
-    "News Corp (Class A)": None,                  # ver EQUIVALENCIAS_HASTA (solo hasta 2013)
+    # comprada por Avago (2016), que tomó el nombre
+    "Broadcom Corp (Class A)": None,
+    # comprada por Exelon (2012); CEG actual = escisión 2022
+    "Constellation Energy Group, Inc": None,
+    # Univ. of Phoenix; APO actual = Apollo Global Mgmt
+    "Apollo Group, Inc (Class A)": None,
+    # comprada por Eaton (2012); COO = Cooper Companies
+    "Cooper Industries, Ltd (Class A)": None,
+    # ver EQUIVALENCIAS_HASTA (solo hasta 2013)
+    "News Corp (Class A)": None,
     # Dell Inc se hizo privada en 2013; Dell Technologies es otra sociedad.
     # Además Yahoo no tiene precios de DELL antes de 2016-08 y 2016-2018 son
     # del tracking stock DVMT (el "split" 1.806 de 2018-12-28 es su canje).
@@ -136,18 +157,23 @@ EQUIVALENCIAS_MANUALES = {
     "Dell, Inc": None,
 
     # --- casos de la revisión 2010-2026 (nombres como vienen en holdings) ---
-    "Facebook, Inc. Class A": "META",             # Facebook -> Meta Platforms (2021)
+    # Facebook -> Meta Platforms (2021)
+    "Facebook, Inc. Class A": "META",
     "TheCoca-ColaCo.": "KO",
     "Schlumberger NV": "SLB",
     "Raytheon Technologies Corp.": "RTX",         # -> RTX Corp (2023)
     "Priceline Group, Inc.": "BKNG",              # -> Booking Holdings (2018)
     "priceline.com, Inc.": "BKNG",
     "Anthem, Inc.": "ELV",                        # -> Elevance (2022)
-    "DowDuPont, Inc.": "DD",                      # DowDuPont -> DuPont de Nemours (2019, sucesora legal)
-    "Raytheon Co.": None,                         # fusión con UTX (UTX sucesora legal, 2020)
-    "Dow Chemical Co.": None,                     # -> DowDuPont (2017); DOW actual = escisión 2019
+    # DowDuPont -> DuPont de Nemours (2019, sucesora legal)
+    "DowDuPont, Inc.": "DD",
+    # fusión con UTX (UTX sucesora legal, 2020)
+    "Raytheon Co.": None,
+    # -> DowDuPont (2017); DOW actual = escisión 2019
+    "Dow Chemical Co.": None,
     "Allergan PLC": None,                         # AbbVie (2020)
-    "Actavis PLC": None,                          # = Allergan PLC (cambió de nombre 2015)
+    # = Allergan PLC (cambió de nombre 2015)
+    "Actavis PLC": None,
     "Celgene Corp.": None,                        # Bristol-Myers Squibb (2019)
     "Twenty-First Century Fox, Inc. (Class A)": None,  # Disney (2019)
     "Express Scripts Holding Co.": None,          # Cigna (2018)
@@ -157,9 +183,11 @@ EQUIVALENCIAS_MANUALES = {
     "Time Warner Cable, Inc.": None,              # Charter (2016)
     "Aetna, Inc.": None,                          # CVS (2018)
     "Activision Blizzard, Inc.": None,            # Microsoft (2023)
-    "Walgreen Co.": None,                         # -> WBA; se hizo privada (2025), Yahoo ya no tiene precios
+    # -> WBA; se hizo privada (2025), Yahoo ya no tiene precios
+    "Walgreen Co.": None,
     "Walgreens Boots Alliance, Inc.": None,
-    "Google, Inc. (Class C)": "GOOGL",            # misma empresa: una sola serie (GOOGL)
+    # misma empresa: una sola serie (GOOGL)
+    "Google, Inc. (Class C)": "GOOGL",
     "Alphabet, Inc. Class A": "GOOGL",
     "Alphabet, Inc. Class C": "GOOGL",
     "DIRECTV (Class A)": None,
@@ -168,8 +196,10 @@ EQUIVALENCIAS_MANUALES = {
 # Equivalencias que solo aplican HASTA cierto año, porque después el mismo
 # nombre corresponde a OTRA empresa: nombre -> (ticker o None, último año).
 EQUIVALENCIAS_HASTA = {
-    "SanDisk Corp": (None, 2016),         # comprada por WDC (2016); SNDK actual = escisión 2025
-    "News Corp (Class A)": (None, 2013),  # vieja News Corp -> 21st Century Fox; NWS actual = escisión 2013
+    # comprada por WDC (2016); SNDK actual = escisión 2025
+    "SanDisk Corp": (None, 2016),
+    # vieja News Corp -> 21st Century Fox; NWS actual = escisión 2013
+    "News Corp (Class A)": (None, 2013),
 }
 
 # Filas de los holdings que no son acciones (efectivo, divisas, futuros)
@@ -184,6 +214,7 @@ def clave_equivalencia(nombre: str) -> str:
     s = str(nombre).strip().lower()
     s = re.sub(r"^the\s*", "", s)
     return re.sub(r"[^a-z0-9]", "", s)
+
 
 _PALABRAS_VACIAS = {
     "INC", "INCORPORATED", "CORP", "CORPORATION", "CO", "COS", "COMPANY",
@@ -211,7 +242,8 @@ def similitud_nombres(a: str, b: str) -> float:
     if not na or not nb:
         return 0.0
     r1 = difflib.SequenceMatcher(None, na, nb).ratio()
-    r2 = difflib.SequenceMatcher(None, na.replace(" ", ""), nb.replace(" ", "")).ratio()
+    r2 = difflib.SequenceMatcher(None, na.replace(
+        " ", ""), nb.replace(" ", "")).ratio()
     ta, tb = set(na.split()), set(nb.split())
     contenido = 0.9 if (ta <= tb or tb <= ta) else 0.0
     return max(r1, r2, contenido)
@@ -264,8 +296,10 @@ class AnnualTop100Selector:
         self.anio_fin = anio_fin or int(self.df["Year"].max())
         self.top_n = top_n
         equiv = EQUIVALENCIAS_MANUALES if equivalencias is None else equivalencias
-        self.equivalencias = {clave_equivalencia(k): v for k, v in equiv.items()}
-        self.equiv_hasta = {clave_equivalencia(k): v for k, v in EQUIVALENCIAS_HASTA.items()}
+        self.equivalencias = {clave_equivalencia(
+            k): v for k, v in equiv.items()}
+        self.equiv_hasta = {clave_equivalencia(
+            k): v for k, v in EQUIVALENCIAS_HASTA.items()}
         self.umbral = umbral_nombre
         self.revision = pd.DataFrame()
         self.seleccion = pd.DataFrame()
@@ -276,7 +310,8 @@ class AnnualTop100Selector:
         datos (Ticker_datos) y su estado."""
         # Referencia de nombres: la fuente de holdings más reciente (hoy)
         hold = self.df[self.df["Fuente"] != "FactSet"]
-        ref_anio = int(hold["Year"].max()) if len(hold) else int(self.df["Year"].max())
+        ref_anio = int(hold["Year"].max()) if len(
+            hold) else int(self.df["Year"].max())
         ref = (self.df[self.df["Year"] == ref_anio]
                .sort_values("Weight", ascending=False)
                .drop_duplicates("Ticker_norm").set_index("Ticker_norm")["Company"])
@@ -302,14 +337,17 @@ class AnnualTop100Selector:
             elif r["Fuente"] == "FactSet":
                 t, e = r["Ticker_norm"], "FACTSET"
             elif r["Ticker_norm"] in ref.index:
-                s = round(similitud_nombres(r["Company"], ref[r["Ticker_norm"]]), 2)
+                s = round(similitud_nombres(
+                    r["Company"], ref[r["Ticker_norm"]]), 2)
                 if s >= self.umbral:
                     t, e = r["Ticker_norm"], "OK"
                 else:
                     e = "REVISAR"
             else:
                 t, e = r["Ticker_norm"], "FUERA_HOY"
-            tick.append(t); estado.append(e); sim_l.append(s)
+            tick.append(t)
+            estado.append(e)
+            sim_l.append(s)
         d["Ticker_datos"], d["Estado"], d["Similitud_nombre"] = tick, estado, sim_l
         d["Nombre_hoy"] = d["Ticker_datos"].map(ref)
 
@@ -320,7 +358,8 @@ class AnnualTop100Selector:
             _m=(d.loc[vivos, "Estado"] == "MANUAL").astype(int),
             _s=d.loc[vivos, "Similitud_nombre"].fillna(1.0),
         ).sort_values(["_m", "_s", "Weight"], ascending=False)
-        dup = orden.index[orden.duplicated(["Year", "Ticker_datos"], keep="first")]
+        dup = orden.index[orden.duplicated(
+            ["Year", "Ticker_datos"], keep="first")]
         d.loc[dup, "Estado"] = "DUPLICADA"
         d.loc[dup, "Ticker_datos"] = None
 
@@ -337,7 +376,8 @@ class AnnualTop100Selector:
 
         # Una sola clase de acción por empresa y año (GOOG/GOOGL, FOX/FOXA,
         # NWS/NWSA): se queda la de mayor peso.
-        d["_empresa"] = d["Nombre_hoy"].fillna(d["Company"]).map(normalizar_nombre)
+        d["_empresa"] = d["Nombre_hoy"].fillna(
+            d["Company"]).map(normalizar_nombre)
         d = (d.sort_values("Weight", ascending=False)
              .drop_duplicates(["Year", "_empresa"]).drop(columns="_empresa"))
 
@@ -349,13 +389,16 @@ class AnnualTop100Selector:
             if base.empty:
                 previos = [a for a in anios_disp if a < anio]
                 if not previos:
-                    print(f"  AVISO: no hay composición para {anio} ni para años anteriores; se omite.")
+                    print(
+                        f"  AVISO: no hay composición para {anio} ni para años anteriores; se omite.")
                     continue
                 base = d[d["Year"] == previos[-1]].copy()
                 nota = f" (sin archivo de {anio}: se repite la selección de {previos[-1]})"
-                base["Fuente"] = base["Fuente"] + f" [repetido de {previos[-1]}]"
+                base["Fuente"] = base["Fuente"] + \
+                    f" [repetido de {previos[-1]}]"
                 base["Year"] = anio
-            top = base.sort_values("Weight", ascending=False).head(self.top_n).copy()
+            top = base.sort_values(
+                "Weight", ascending=False).head(self.top_n).copy()
             top["Rank"] = range(1, len(top) + 1)
             partes.append(top)
             n_datos = top["Estado"].isin(CON_DATOS).sum()
@@ -390,7 +433,8 @@ class AnnualTop100Selector:
         s = self.seleccion.dropna(subset=["Ticker"]).sort_values("Year")
         return (s.groupby("Ticker")
                 .agg(Company=("Company", "last"),
-                     Anios_en_top100=("Year", lambda x: ", ".join(str(a) for a in x)),
+                     Anios_en_top100=(
+                         "Year", lambda x: ", ".join(str(a) for a in x)),
                      N_anios=("Year", "nunique"),
                      Primer_anio=("Year", "min"),
                      Ultimo_anio=("Year", "max"),
@@ -410,14 +454,17 @@ class AnnualTop100Selector:
         rev = (self.revision.groupby(["Company", "Ticker", "Estado"], dropna=False)
                .agg(Ticker_datos=("Ticker_datos", "first"), Nombre_hoy=("Nombre_hoy", "first"),
                     Similitud_nombre=("Similitud_nombre", "first"),
-                    Anios=("Year", lambda x: ", ".join(str(a) for a in sorted(x))),
+                    Anios=("Year", lambda x: ", ".join(str(a)
+                           for a in sorted(x))),
                     Peso_max=("Weight", "max"))
                .reset_index())
         # marca si alguna vez estuvo en el top 100
         en_top = set(zip(self.seleccion["Company"], self.seleccion["Estado"]))
-        rev["En_top100"] = [(c, e) in en_top for c, e in zip(rev["Company"], rev["Estado"])]
+        rev["En_top100"] = [(c, e) in en_top for c,
+                            e in zip(rev["Company"], rev["Estado"])]
         (rev.sort_values(["Estado", "En_top100", "Peso_max"],
-                         key=lambda s: s.map(orden) if s.name == "Estado" else s,
+                         key=lambda s: s.map(
+                             orden) if s.name == "Estado" else s,
                          ascending=[True, False, False])
          .to_csv(revision_path, index=False, encoding="utf-8-sig"))
         print(f"Selección anual guardada en: {output_path}")

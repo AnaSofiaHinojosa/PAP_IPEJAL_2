@@ -1,27 +1,3 @@
-"""
-Descarga de datos de Yahoo Finance para la construcción de factores del PAP
-(Instituto de Pensiones de Jalisco).
-
-Ventana: enero 2006 - fecha actual, frecuencia mensual. Por ticker entrega:
-    - precio_ajustado : cierre ajustado por splits y dividendos
-                        (rendimiento total -> Volatilidad y Momentum)
-    - precio_cierre   : cierre ajustado solo por splits (sin dividendos)
-                        -> para P/E y market cap
-    - volumen         : volumen del mes (ajustado por splits) -> Liquidez
-y guarda la lista de splits de cada ticker (self.splits), que
-sec_edgar_fundamentals.py usa para poner la EPS y las acciones de EDGAR en
-la misma base de acciones que estos precios.
-
-Además: S&P 500 (^GSPC) para el factor Mercado y T-bill de 13 semanas
-(^IRX) como tasa libre de riesgo aproximada.
-
-Las fechas se guardan como FIN de mes (el cierre mensual de Yahoo es el
-del último día hábil del mes), para empatar bien con la fecha de
-publicación de los datos de EDGAR.
-
-Requiere: pip install yfinance pandas --break-system-packages
-"""
-
 from dataclasses import dataclass
 from datetime import datetime
 import pandas as pd
@@ -98,7 +74,8 @@ class YahooFactorDataFetcher:
         resultados = {}
         for ticker in self.tickers:
             try:
-                data = _descargar_mensual(ticker, self.fecha_inicio, self.fecha_fin)
+                data = _descargar_mensual(
+                    ticker, self.fecha_inicio, self.fecha_fin)
                 try:
                     self.splits[ticker] = _descargar_splits(ticker)
                 except Exception:
@@ -111,11 +88,13 @@ class YahooFactorDataFetcher:
                 df["volumen"] = data["Volume"]
 
                 self.precios[ticker] = df
-                resultados[ticker] = ResultadoDescarga(ticker, ok=True, datos=df)
+                resultados[ticker] = ResultadoDescarga(
+                    ticker, ok=True, datos=df)
 
             except Exception as e:
                 self.errores[ticker] = str(e)
-                resultados[ticker] = ResultadoDescarga(ticker, ok=False, error=str(e))
+                resultados[ticker] = ResultadoDescarga(
+                    ticker, ok=False, error=str(e))
 
         return resultados
 
@@ -126,13 +105,16 @@ class YahooFactorDataFetcher:
         resultados, columnas = {}, []
         for simbolo, nombre in series.items():
             try:
-                data = _descargar_mensual(simbolo, self.fecha_inicio, self.fecha_fin)
+                data = _descargar_mensual(
+                    simbolo, self.fecha_inicio, self.fecha_fin)
                 serie = data["Close"].rename(nombre)
                 columnas.append(serie)
-                resultados[simbolo] = ResultadoDescarga(simbolo, ok=True, datos=serie.to_frame())
+                resultados[simbolo] = ResultadoDescarga(
+                    simbolo, ok=True, datos=serie.to_frame())
             except Exception as e:
                 self.errores[simbolo] = str(e)
-                resultados[simbolo] = ResultadoDescarga(simbolo, ok=False, error=str(e))
+                resultados[simbolo] = ResultadoDescarga(
+                    simbolo, ok=False, error=str(e))
 
         if columnas:
             self.mercado = pd.concat(columnas, axis=1)
@@ -147,7 +129,8 @@ class YahooFactorDataFetcher:
         for ticker in self.precios:
             try:
                 est = yf.Ticker(ticker).quarterly_income_stmt
-                fila = next((f for f in ("Diluted EPS", "Basic EPS") if f in est.index), None)
+                fila = next(
+                    (f for f in ("Diluted EPS", "Basic EPS") if f in est.index), None)
                 if fila is not None:
                     s = est.loc[fila].dropna()
                     s.index = pd.to_datetime(s.index)
