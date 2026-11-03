@@ -1,12 +1,13 @@
-## Obtención de datos históricos
-#import kagglehub
+# Obtención de datos históricos
+# import kagglehub
 # Download latest version
-#path = kagglehub.dataset_download("devaangbarthwal/s-and-p-500-holdings-and-weights-spy-2000-2024")
-#print("Path to dataset files:", path)
+# path = kagglehub.dataset_download("devaangbarthwal/s-and-p-500-holdings-and-weights-spy-2000-2024")
+# print("Path to dataset files:", path)
 
-#2026
+# 2026
 # https://www.ssga.com/us/en/intermediary/etfs/state-street-spdr-sp-500-etf-trust-spy
 
+import re
 import os
 import glob
 import pandas as pd
@@ -32,7 +33,8 @@ class HoldingsUniverseBuilder:
         procesar los archivos históricos
         """
         dfs = []
-        csv_files = sorted(glob.glob(os.path.join(self.historical_dir, "*.csv")))
+        csv_files = sorted(
+            glob.glob(os.path.join(self.historical_dir, "*.csv")))
 
         for filepath in csv_files:
             filename = os.path.basename(filepath)
@@ -47,7 +49,8 @@ class HoldingsUniverseBuilder:
             df['Weight'] = pd.to_numeric(df['Weight'], errors='coerce')
 
             # Ordenar por ponderación y (si top_n) tomar las Top N empresas
-            df_top = df.dropna(subset=['Ticker']).sort_values(by='Weight', ascending=False)
+            df_top = df.dropna(subset=['Ticker']).sort_values(
+                by='Weight', ascending=False)
             if self.top_n:
                 df_top = df_top.head(self.top_n)
             df_top = df_top.copy()
@@ -92,7 +95,8 @@ class HoldingsUniverseBuilder:
         self.universe_df = pd.concat(all_dfs, ignore_index=True)
 
         # Estandarizar orden de columnas
-        self.universe_df = self.universe_df[['Year', 'Company', 'Ticker', 'Weight']]
+        self.universe_df = self.universe_df[[
+            'Year', 'Company', 'Ticker', 'Weight']]
         return self.universe_df
 
     def export_to_csv(self, output_path: str):
@@ -100,15 +104,13 @@ class HoldingsUniverseBuilder:
         Exporta el dataset procesado a un archivo CSV.
         """
         if self.universe_df.empty:
-            raise ValueError("El universo aún no ha sido construido. Ejecuta el método .build() primero.")
+            raise ValueError(
+                "El universo aún no ha sido construido. Ejecuta el método .build() primero.")
         self.universe_df.to_csv(output_path, index=False)
         print(f"Dataset del Universo guardado correctamente en: {output_path}")
 
 
-# ====================================================================== #
 # Exportaciones de FactSet Universal Screening (opcional)
-# ====================================================================== #
-import re
 
 
 class FactSetScreeningLoader:
@@ -136,7 +138,8 @@ class FactSetScreeningLoader:
         crudo = pd.read_excel(filepath, header=None)
         # La exportación trae unas filas de título antes del encabezado:
         # se busca la fila cuya primera celda dice "Symbol".
-        fila = crudo.index[crudo.iloc[:, 0].astype(str).str.strip() == "Symbol"]
+        fila = crudo.index[crudo.iloc[:, 0].astype(
+            str).str.strip() == "Symbol"]
         if len(fila) == 0:
             raise ValueError("no se encontró el encabezado 'Symbol'")
         df = pd.read_excel(filepath, header=int(fila[0]))
@@ -151,7 +154,8 @@ class FactSetScreeningLoader:
 
         c_mcap = col("MktVal Co", "Market Value", "Market Cap", "MktVal")
         if c_mcap is None:
-            raise ValueError(f"no hay columna de market cap (columnas: {list(df.columns)})")
+            raise ValueError(
+                f"no hay columna de market cap (columnas: {list(df.columns)})")
         out = pd.DataFrame({
             "Company": df[col("Name")],
             "Ticker": df[col("Symbol")],
@@ -171,7 +175,8 @@ class FactSetScreeningLoader:
             try:
                 df = self._leer(filepath)
             except Exception as e:
-                print(f"  AVISO: {os.path.basename(filepath)} no se pudo leer ({e})")
+                print(
+                    f"  AVISO: {os.path.basename(filepath)} no se pudo leer ({e})")
                 continue
             df["Year"] = anio_corte + 1
             df["Fecha_corte"] = f"{anio_corte}-12-31"

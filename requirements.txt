@@ -1,4 +1,5 @@
 pandas
 openpyxl
-os
-glob
+yfinance
+requests
+numpy
