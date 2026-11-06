@@ -23,7 +23,7 @@ from calibrar_modelos import (
     leer_config_base,
 )
 from estrategia_cuantilica import N_LARGO, N_CORTO, COSTO_BPS
-from metricas_desempeno import resumen_metricas, curva_capital, MESES_ANIO
+from metricas_desempeno import resumen_metricas, curva_capital, treynor, MESES_ANIO
 
 REGRESION = Path("salidas/regresion")
 CALIBRACION = Path("salidas/calibracion")
@@ -41,13 +41,13 @@ FRECUENCIAS_REBALANCEO = {"Mensual": 1, "Trimestral": 3}
 # Si se pone (num, version), se usa ese modelo, p. ej. (1, "A").
 MODELO_MANUAL = None
 
-# Estrategias y pasivas (mismos nombres que estrategia_cuantilica.py)
+# Estrategias y pasivas (mismos nombres que estrategia_cuantilica.py).
+# Solo se analiza la estrategia largo-corto.
 LS_BRUTO = "Largo-Corto (bruto)"
 LS_NETO = "Largo-Corto (neto de costos)"
-SOLO_LARGO = "Solo largo, top N (neto)"
 PASIVA_EW = "Pasiva: Top 100 igual ponderado"
 PASIVA_SP = "Pasiva: S&P 500"
-ESTRATEGIAS_ACTIVAS = [LS_NETO, SOLO_LARGO]
+ESTRATEGIA_GRAFICA = LS_NETO     # la que se grafica
 
 
 def etiqueta_ventana(v: int | None) -> str:
@@ -176,7 +176,6 @@ def construir_portafolios_rebalanceo(
             "No hubo ningún mes con suficientes acciones para armar el portafolio.")
     ret = pd.DataFrame(filas).set_index("fecha").sort_index()
     ret["ls_neto"] = ret["ls_bruto"] - ret["costo_largo"] - ret["costo_corto"]
-    ret["largo_neto"] = ret["ret_largo"] - ret["costo_largo"]
     return ret
 
 
@@ -192,23 +191,18 @@ def information_ratio(r: pd.Series, benchmark: pd.Series) -> dict:
             "ir": float(media / te) if te > 0 else np.nan}
 
 
-def metricas_escenario(ret: pd.DataFrame, pasivas: pd.DataFrame, rf: pd.Series,
+def metricas_escenario(ret: pd.DataFrame, pasivas: pd.DataFrame,
                        mercado_exceso: pd.Series) -> list[dict]:
-    """Métricas de las estrategias de un escenario (ventana x rebalanceo)."""
-    series = {
-        LS_BRUTO: (ret["ls_bruto"], ret["ls_bruto"]),
-        LS_NETO: (ret["ls_neto"], ret["ls_neto"]),
-        # largo-corto: se autofinancia, sin rf
-        SOLO_LARGO: (ret["largo_neto"], ret["largo_neto"] - rf),
-    }
-    operado = {
-        LS_BRUTO: ret["operado_largo"] + ret["operado_corto"],
-        LS_NETO: ret["operado_largo"] + ret["operado_corto"],
-        SOLO_LARGO: ret["operado_largo"],
-    }
+    """Métricas del largo-corto (bruto y neto) de un escenario (ventana x rebalanceo).
+    El largo-corto se autofinancia, así que su rendimiento en exceso es el mismo
+    rendimiento (no se le resta rf), igual que en estrategia_cuantilica.py."""
+    series = {LS_BRUTO: ret["ls_bruto"], LS_NETO: ret["ls_neto"]}
+    operado = ret["operado_largo"] + ret["operado_corto"]
+    cero = pd.Series(0.0, index=ret.index)
     filas = []
-    for nombre, (r, exceso) in series.items():
-        m = resumen_metricas(r, exceso, mercado_exceso)
+    for nombre, r in series.items():
+        m = resumen_metricas(r, r, mercado_exceso)
+        ir_0 = information_ratio(r, cero)
         ir_ew = information_ratio(r, pasivas[PASIVA_EW])
         ir_sp = information_ratio(r, pasivas[PASIVA_SP]) if PASIVA_SP in pasivas else {}
         filas.append({
@@ -216,17 +210,21 @@ def metricas_escenario(ret: pd.DataFrame, pasivas: pd.DataFrame, rf: pd.Series,
             "retorno_anualizado": m["retorno_anualizado"],
             "vol_anual": m["vol_anual"],
             "sharpe_clasico": m["sharpe_clasico"],
+            "ir_vs_cero": ir_0["ir"],
             "ir_vs_top100_ew": ir_ew["ir"],
             "tracking_error_vs_top100_ew": ir_ew["tracking_error"],
             "rend_activo_vs_top100_ew": ir_ew["rend_activo_anual"],
             "ir_vs_sp500": ir_sp.get("ir", np.nan),
             "tracking_error_vs_sp500": ir_sp.get("tracking_error", np.nan),
+            "treynor": treynor(r.dropna(), m.get("beta_mercado", np.nan)),
+            "beta_mercado": m.get("beta_mercado", np.nan),
+            "r2_mercado": m.get("r2_mercado", np.nan),
+            "alpha_anual": m.get("alpha_anual", np.nan),
+            "t_alpha": m.get("t_alpha", np.nan),
             "max_drawdown": m["max_drawdown"],
             "sortino": m["sortino"],
-            "alpha_anual": m.get("alpha_anual", np.nan),
-            "beta_mercado": m.get("beta_mercado", np.nan),
-            "operado_promedio_mensual": float(operado[nombre].mean()),
-            "operado_anual": float(operado[nombre].mean() * MESES_ANIO),
+            "operado_promedio_mensual": float(operado.mean()),
+            "operado_anual": float(operado.mean() * MESES_ANIO),
             "n_rebalanceos": int(ret["rebalanceo"].sum()),
             "n_meses": m["n_meses"],
         })
@@ -245,6 +243,8 @@ def metricas_pasivas(pasivas: pd.DataFrame, rf: pd.Series,
 
 # Gráfico
 def graficar(resumen: pd.DataFrame, curvas: dict, ruta: Path, titulo: str):
+    """Barras ventana x rebalanceo de cada métrica del largo-corto neto, más la
+    curva de capital de los 6 escenarios."""
     try:
         import matplotlib
         matplotlib.use("Agg")
@@ -252,49 +252,53 @@ def graficar(resumen: pd.DataFrame, curvas: dict, ruta: Path, titulo: str):
     except ImportError:
         print("  (matplotlib no está instalado; se omite el gráfico)")
         return
+    # (columna, título, formato porcentaje)
     metricas = [("retorno_anualizado", "Retorno anualizado", True),
                 ("vol_anual", "Volatilidad anual", True),
                 ("sharpe_clasico", "Sharpe clásico", False),
-                ("ir_vs_top100_ew", "IR vs Top 100 EW", False)]
+                ("ir_vs_cero", "IR vs cero (benchmark = no invertir)", False),
+                ("ir_vs_top100_ew", "IR vs Top 100 igual ponderado", False),
+                ("treynor", "Treynor (exceso anual / beta)", True),
+                ("beta_mercado", "Beta de mercado (vs S&P 500)", False)]
     ventanas = list(dict.fromkeys(resumen["ventana_beta"]))
     frecuencias = list(FRECUENCIAS_REBALANCEO)
-    fig, axes = plt.subplots(len(ESTRATEGIAS_ACTIVAS) + 1, len(metricas),
-                             figsize=(16, 4 * (len(ESTRATEGIAS_ACTIVAS) + 1)))
+    sub = resumen[resumen["estrategia"] == ESTRATEGIA_GRAFICA]
+    fig, axes = plt.subplots(2, 4, figsize=(18, 9))
     ancho = 0.8 / len(frecuencias)
     x = np.arange(len(ventanas))
-    for fila, estrategia in enumerate(ESTRATEGIAS_ACTIVAS):
-        sub = resumen[resumen["estrategia"] == estrategia]
-        for col, (metrica, nombre, pct) in enumerate(metricas):
-            ax = axes[fila, col]
-            for j, frec in enumerate(frecuencias):
-                vals = [sub[(sub["ventana_beta"] == v) & (sub["rebalanceo"] == frec)][metrica].iloc[0]
-                        for v in ventanas]
-                barras = ax.bar(x + (j - (len(frecuencias) - 1) / 2) * ancho, vals,
-                                ancho, label=frec)
-                ax.bar_label(barras, fmt="%.1f%%" if pct else "%.2f", fontsize=7,
-                             labels=[f"{v:.1%}" if pct else f"{v:.2f}" for v in vals])
-            ax.set_xticks(x, [v.split(" ")[0] for v in ventanas])
-            ax.axhline(0, color="gray", lw=0.8)
-            ax.set_title(f"{nombre}\n{estrategia}", fontsize=9)
-            if pct:
-                ax.yaxis.set_major_formatter(
-                    matplotlib.ticker.PercentFormatter(1.0, decimals=0))
-            ax.grid(alpha=0.3, axis="y")
-            if fila == 0 and col == 0:
-                ax.legend(fontsize=8, title="Rebalanceo", title_fontsize=8)
-    # Última fila: valor de $1 del solo largo y del largo-corto en cada escenario
-    for col, estrategia in enumerate(ESTRATEGIAS_ACTIVAS):
-        ax = axes[-1, col]
-        for (v, frec), df in curvas.items():
-            ax.plot(curva_capital(df[estrategia]), lw=1,
-                    ls="-" if frec == "Mensual" else "--",
-                    label=f"{v.split(' ')[0]}, {frec.lower()}")
-        ax.set_title(f"Valor de $1 invertido\n{estrategia}", fontsize=9)
-        ax.grid(alpha=0.3)
-        ax.legend(fontsize=7)
-    for ax in axes[-1, len(ESTRATEGIAS_ACTIVAS):]:
-        ax.axis("off")
-    fig.suptitle(f"Análisis de sensibilidad  |  {titulo}", fontsize=12)
+    for ax, (metrica, nombre, pct) in zip(axes.ravel(), metricas):
+        for j, frec in enumerate(frecuencias):
+            vals = [sub[(sub["ventana_beta"] == v) & (sub["rebalanceo"] == frec)][metrica].iloc[0]
+                    for v in ventanas]
+            barras = ax.bar(x + (j - (len(frecuencias) - 1) / 2) * ancho, vals,
+                            ancho, label=frec)
+            ax.bar_label(barras, fontsize=7,
+                         labels=[f"{v:.1%}" if pct else f"{v:.2f}" for v in vals])
+        ax.set_xticks(x, [v.split(" ")[0] for v in ventanas])
+        ax.set_xlabel("Ventana de estimación de betas", fontsize=8)
+        ax.axhline(0, color="gray", lw=0.8)
+        ax.set_title(nombre, fontsize=10)
+        if pct:
+            ax.yaxis.set_major_formatter(
+                matplotlib.ticker.PercentFormatter(1.0, decimals=0))
+        ax.grid(alpha=0.3, axis="y")
+    axes[0, 0].legend(fontsize=8, title="Rebalanceo", title_fontsize=8)
+    if "r2_mercado" in sub.columns:
+        ax_beta = axes.ravel()[len(metricas) - 1]
+        ax_beta.set_title(f"Beta de mercado (vs S&P 500)\nR² con el mercado: "
+                          f"{sub['r2_mercado'].min():.2f} a {sub['r2_mercado'].max():.2f}",
+                          fontsize=10)
+
+    # Último panel: valor de $1 invertido en cada escenario
+    ax = axes.ravel()[-1]
+    for (v, frec), serie in curvas.items():
+        ax.plot(curva_capital(serie), lw=1, ls="-" if frec == "Mensual" else "--",
+                label=f"{v.split(' ')[0]}, {frec.lower()}")
+    ax.set_title("Valor de $1 invertido", fontsize=10)
+    ax.grid(alpha=0.3)
+    ax.legend(fontsize=7)
+
+    fig.suptitle(f"Análisis de sensibilidad del {ESTRATEGIA_GRAFICA}  |  {titulo}", fontsize=12)
     fig.tight_layout()
     fig.savefig(ruta, dpi=150)
     plt.close(fig)
@@ -317,21 +321,33 @@ def definiciones(cfg: dict) -> pd.DataFrame:
                           "comparación sea justa"),
         ("retorno_anualizado", "Rendimiento geométrico anual (compuesto)"),
         ("vol_anual", "Desviación estándar mensual x sqrt(12)"),
+        ("Estrategia", f"Largo-corto: cada vez que se rebalancea, largo en las {N_LARGO} acciones con mayor "
+                       f"E[R] y corto en las {N_CORTO} con menor E[R] del Top 100, pesos iguales. Bruto = "
+                       f"sin costos; neto = menos {COSTO_BPS:g} pb por cada 100% operado"),
         ("sharpe_clasico", "(media del rendimiento en exceso / desviación) x sqrt(12). Al largo-corto no "
-                           "se le resta rf porque se autofinancia; al solo largo sí"),
+                           "se le resta rf porque se autofinancia"),
+        ("ir_vs_cero", "Information Ratio con benchmark = no invertir (el benchmark natural de un "
+                       "largo-corto): rendimiento medio anualizado / volatilidad anualizada. Como al "
+                       "largo-corto no se le resta rf, coincide con el sharpe_clasico"),
         ("ir_vs_top100_ew", "Information Ratio = rendimiento activo medio anualizado / tracking error "
-                            "anualizado, contra el Top 100 igual ponderado (rebalanceado cada mes). Es el "
-                            "benchmark principal porque, igual que las acciones, incluye dividendos"),
-        ("ir_vs_sp500", "Mismo IR contra el S&P 500 (^GSPC). Ojo: el índice no incluye dividendos, así "
-                        "que este IR sale inflado"),
-        ("IR del largo-corto", "El largo-corto tiene beta de mercado cercana a 0, así que comparar su "
-                               "rendimiento contra un índice largo tiene poco sentido; su IR natural es "
-                               "contra 0, que coincide con su sharpe_clasico"),
+                            "anualizado, contra el Top 100 igual ponderado (rebalanceado cada mes). Sale "
+                            "negativo porque el largo-corto tiene poca exposición al mercado y el Top 100 "
+                            "es 100% largo: la diferencia es casi todo el rendimiento del mercado"),
+        ("ir_vs_sp500", "Mismo IR contra el S&P 500 (^GSPC). Ojo: el índice no incluye dividendos"),
         ("tracking_error", "Desviación estándar anualizada del rendimiento activo (estrategia - benchmark)"),
-        ("operado_anual", "Suma de |cambio de peso| por año (compras y ventas). Con rebalanceo trimestral "
-                          "solo se opera 4 veces al año"),
+        ("beta_mercado / r2_mercado", "Regresión del rendimiento del largo-corto contra el exceso del "
+                                      "S&P 500 (MERCADO de factores.csv): pendiente y R². Una beta cercana a "
+                                      "0 significa que el portafolio casi no depende del mercado"),
+        ("treynor", "Rendimiento en exceso medio anualizado / beta_mercado (misma función que "
+                    "estrategia_cuantilica.py). Mide el rendimiento por unidad de riesgo de mercado. Como la "
+                    "beta del largo-corto es chica, el Treynor sale grande y cambia mucho con pequeños "
+                    "cambios en la beta: hay que leerlo junto con la gráfica de la beta"),
+        ("alpha_anual / t_alpha", "Constante de esa misma regresión, anualizada, y su t-stat"),
+        ("operado_anual", "Suma de |cambio de peso| por año (compras y ventas de ambas piernas). Con "
+                          "rebalanceo trimestral solo se opera 4 veces al año"),
         ("Pasiva: Top 100 igual ponderado", "Promedio simple del rendimiento de todos los miembros del "
-                                            "Top 100 en cada mes (no usa el modelo)"),
+                                            "Top 100 en cada mes (no usa el modelo); solo se usa como "
+                                            "benchmark del IR"),
         ("Sesgo", "El modelo se eligió con el mismo periodo que se usa aquí; el desempeño es en-muestra "
                   "respecto a esa elección"),
     ], columns=["concepto", "definición"])
@@ -417,20 +433,21 @@ def main():
         for nombre_frec, frec in FRECUENCIAS_REBALANCEO.items():
             ret = construir_portafolios_rebalanceo(er, real_miembros, real_total, fechas, frec)
             ret = ret.reindex(fechas)
-            for fila in metricas_escenario(ret, pasivas, rf, mercado_exceso):
+            for fila in metricas_escenario(ret, pasivas, mercado_exceso):
                 filas.append({"ventana_beta": etq, "rebalanceo": nombre_frec, **fila})
-            curvas[(etq, nombre_frec)] = pd.DataFrame({
-                LS_NETO: ret["ls_neto"], SOLO_LARGO: ret["largo_neto"]})
-            for col, nombre in (("ls_bruto", LS_BRUTO), ("ls_neto", LS_NETO),
-                                ("largo_neto", SOLO_LARGO)):
+            curvas[(etq, nombre_frec)] = ret["ls_neto"] if ESTRATEGIA_GRAFICA == LS_NETO \
+                else ret["ls_bruto"]
+            for col, nombre in (("ls_bruto", LS_BRUTO), ("ls_neto", LS_NETO)):
                 retornos[f"{nombre} | {etq} | {nombre_frec}"] = ret[col]
     resumen = pd.DataFrame(filas)
 
     # Tablas ventana x rebalanceo para cada métrica principal
     tablas = {}
     for metrica, hoja in (("retorno_anualizado", "Retorno"), ("vol_anual", "Volatilidad"),
-                          ("sharpe_clasico", "Sharpe"), ("ir_vs_top100_ew", "IR_vs_Top100"),
-                          ("ir_vs_sp500", "IR_vs_SP500"), ("operado_anual", "Operado_anual")):
+                          ("sharpe_clasico", "Sharpe"), ("ir_vs_cero", "IR_vs_cero"),
+                          ("ir_vs_top100_ew", "IR_vs_Top100"), ("ir_vs_sp500", "IR_vs_SP500"),
+                          ("treynor", "Treynor"), ("beta_mercado", "Beta_mercado"),
+                          ("operado_anual", "Operado_anual")):
         tablas[hoja] = resumen.pivot_table(index="ventana_beta", columns=["estrategia", "rebalanceo"],
                                            values=metrica, sort=False)
     pasivas_tabla = metricas_pasivas(pasivas, rf, mercado_exceso)
@@ -464,9 +481,9 @@ def main():
     graficar(resumen, curvas, SALIDA / "sensibilidad.png", titulo)
 
     # 5) Consola
-    cols = ["ventana_beta", "rebalanceo", "retorno_anualizado", "vol_anual",
-            "sharpe_clasico", "ir_vs_top100_ew", "max_drawdown", "operado_anual"]
-    for estrategia in ESTRATEGIAS_ACTIVAS:
+    cols = ["ventana_beta", "rebalanceo", "retorno_anualizado", "vol_anual", "sharpe_clasico",
+            "ir_vs_cero", "ir_vs_top100_ew", "treynor", "beta_mercado", "operado_anual"]
+    for estrategia in (LS_BRUTO, LS_NETO):
         print(f"\n{'=' * 90}\n{estrategia}\n{'=' * 90}")
         print(resumen.loc[resumen["estrategia"] == estrategia, cols].round(4).to_string(index=False))
     print(f"\n{'=' * 90}\nIC del modelo con cada ventana (mismas fechas)\n{'=' * 90}")

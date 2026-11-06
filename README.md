@@ -2,7 +2,7 @@
 
 Pipeline que arma un universo histórico del S&P 500, descarga precios y fundamentales, construye factores tipo Fama-French, estima la exposición (beta) de cada acción a esos factores, calcula un rendimiento esperado mensual por acción y evalúa el modelo con un backtest walk-forward medido con el Coeficiente de Información (IC).
 
-El proyecto se divide en 4 partes que se corren **en orden**, porque cada una consume las salidas de la anterior:
+El proyecto se divide en 5 partes que se corren **en orden**, porque cada una consume las salidas de la anterior:
 
 | Parte | Qué hace | Script principal |
 |---|---|---|
@@ -10,6 +10,7 @@ El proyecto se divide en 4 partes que se corren **en orden**, porque cada una co
 | 2. Matriz de exposiciones | Beta de cada acción a cada factor (con restricción ∑β = 1) | `generar_matriz.py` |
 | 3. Rendimiento esperado | E[R] mensual de cada acción a partir de los betas | `generar_rendimientos.py` |
 | 4. Backtesting y selección | Betas walk-forward, IC y búsqueda en rejilla del mejor modelo | `optimizar_modelos.py` |
+| 5. Análisis de sensibilidad | Retorno, volatilidad, Sharpe, IR, Treynor y beta de mercado del portafolio largo-corto con ventanas de 3, 5 y 10 años y rebalanceo mensual vs. trimestral | `analisis_sensibilidad.py` |
 
 ---
 
@@ -104,6 +105,16 @@ flowchart TD
     COMP --> OPT
     COMP -.-> CMP[("salidas/comparacion_modelos/")]
 
+    %% ===== PARTE 5 =====
+    subgraph P5["Parte 5: Analisis de sensibilidad"]
+        SENS["analisis_sensibilidad.py<br/>ventana de betas x rebalanceo"]
+    end
+
+    CAL[("salidas/calibracion/<br/>finalistas_12_mismas_fechas.csv")] -.-> SENS
+    REG -.-> SENS
+    SENS --> BACK
+    SENS -.-> SOUT[("salidas/sensibilidad/")]
+
     %% ===== UTILIDADES =====
     subgraph UTIL["Utilidades"]
         VAL["Validar Salidas.py"]
@@ -120,8 +131,8 @@ flowchart TD
     classDef datos fill:#fef9c3,stroke:#a16207,color:#111;
     classDef externo fill:#dcfce7,stroke:#15803d,color:#111;
 
-    class MAIN,DATOS,TOP,YAH,SEC,FAC,EXPO,GMAT,GMATV,ERES,GREN,GRENV,BACK,OPT,OPTV,COMP,VAL,DIAG script;
-    class D1,D2,D3,SEL,EMP,REG,MEXP,RESP,BT,CMP,VCSV,DCSV datos;
+    class MAIN,DATOS,TOP,YAH,SEC,FAC,EXPO,GMAT,GMATV,ERES,GREN,GRENV,BACK,OPT,OPTV,COMP,SENS,VAL,DIAG script;
+    class D1,D2,D3,SEL,EMP,REG,MEXP,RESP,BT,CMP,CAL,SOUT,VCSV,DCSV datos;
     class EXT1,EXT2 externo;
 ```
 
@@ -189,6 +200,9 @@ PAP_IPEJAL_2/
 │   ├── optimizar_modelos.py           búsqueda en rejilla del mejor modelo
 │   └── comparar_modelos.py            comparación de los 4 modelos (diseño 2x2)
 │
+├── Parte 5: análisis de sensibilidad
+│   └── analisis_sensibilidad.py       ventanas de estimación x frecuencia de rebalanceo
+│
 ├── Variantes (modelos 2, 3 y 4)
 │   ├── generar_matriz_sin_restriccion.py
 │   ├── generar_matriz_sin_estandarizar.py
@@ -240,7 +254,14 @@ PAP_IPEJAL_2/
     ├── backtesting_sin_restriccion/       Modelo 2 (misma estructura)
     ├── backtesting_sin_estandarizar/      Modelo 3 (misma estructura)
     ├── backtesting_sin_restriccion_sin_estandarizar/   Modelo 4 (misma estructura)
-    └── comparacion_modelos/               salida de comparar_modelos.py
+    ├── comparacion_modelos/               salida de comparar_modelos.py
+    └── sensibilidad/                      Parte 5
+        ├── resumen_sensibilidad.csv           métricas por escenario y estrategia
+        ├── ic_por_ventana.csv                 IC del modelo con cada ventana
+        ├── pasivas.csv                        Top 100 igual ponderado y S&P 500
+        ├── retornos_mensuales.csv
+        ├── sensibilidad.xlsx                  todo lo anterior + tablas ventana x rebalanceo
+        └── sensibilidad.png
 ```
 
 `Data/` nunca se escribe: es solo de entrada. Todo lo que el pipeline produce vive en `salidas/` (más los CSV de selección en la raíz).
@@ -287,6 +308,14 @@ python optimizar_modelos_sin_restriccion_sin_estandarizar.py
 
 # Comparación de los 4 modelos
 python comparar_modelos.py
+```
+
+Parte 5: análisis de sensibilidad. Necesita que antes se hayan corrido los 4 `optimizar_modelos*.py` y `calibrar_modelos.py`, porque toma el `mejor_global` de `salidas/calibracion/finalistas_12_mismas_fechas.csv`:
+
+```bash
+python calibrar_modelos.py
+python estrategia_cuantilica.py      # opcional: portafolio del modelo con rebalanceo mensual
+python analisis_sensibilidad.py
 ```
 
 Utilidades (opcionales):
@@ -354,6 +383,17 @@ usando el beta fijo de la Parte 2 y el factor esperado (que sí varía mes a mes
 
 `comparar_modelos.py` no recalcula nada: lee las salidas de cada `optimizar_modelos*.py` y compara (A) el ganador de cada modelo, (B) los ganadores en las mismas fechas con prueba pareada, (C) la misma configuración en los 4 modelos y (D) los efectos principales del 2x2.
 
+### Parte 5: `analisis_sensibilidad.py`
+
+Evalúa cómo cambian las métricas del portafolio **largo-corto** del mejor modelo (`mejor_global` de la calibración) al mover dos cosas, dejando todo lo demás fijo (versión A/B/C, `min_obs`, ventana de factor, N largo/corto y costos de `estrategia_cuantilica.py`):
+
+- **Ventana de estimación de betas:** 36, 60 y 120 meses (3, 5 y 10 años). Con cada ventana se recalcula el E[R] con las mismas funciones de `backtesting_ajustado.py`. Con la ventana base del modelo el E[R] sale idéntico al de `calibrar_modelos.py`; el script lo verifica e imprime la diferencia.
+- **Frecuencia de rebalanceo:** mensual (igual que `estrategia_cuantilica.py`) o trimestral (en enero, abril, julio y octubre se eligen las acciones; los otros meses se mantienen y los pesos se mueven con el mercado).
+
+Son 3 x 2 = 6 escenarios, todos evaluados en las mismas fechas. Para cada uno se reporta, para el largo-corto bruto y neto de costos: retorno anualizado, volatilidad, Sharpe, IR contra cero (benchmark natural de un largo-corto; coincide con el Sharpe) y contra el Top 100 igual ponderado y el S&P 500, Treynor, beta de mercado (regresión contra el S&P 500), tracking error, max drawdown y lo operado al año. La gráfica `sensibilidad.png` muestra todo eso para el largo-corto neto. Con rebalanceo mensual y la ventana base, el rendimiento bruto es idéntico al de `estrategia_cuantilica.py`.
+
+> Los factores empiezan en 2010, así que en los primeros años las ventanas de 60 y 120 meses todavía no tienen esa historia completa y funcionan como ventana expansiva. La de 120 meses solo se usa completa desde 2020.
+
 ---
 
 ## 6. Parámetros que puedes ajustar
@@ -366,6 +406,7 @@ Todos están al inicio de cada script:
 | `construir_factores.py` | `CORTE`, `MIN_EMPRESAS`, `PONDERACION`, `MESES_MOMENTUM`, `MESES_VOL`, `ORTOGONALIZAR`, `UMBRAL_CORRELACION` |
 | `generar_matriz.py` | `FACTORES`, `FACTOR_BASE`, `RESTRINGIR_SUMA`, `MIN_OBS`, `VENTANA_MESES`, `R2_AVISO`, `ESTANDARIZAR`, `ESTANDARIZAR_Y`, `ENTRENAR_CON_HISTORIAL` |
 | `generar_rendimientos.py` | `VENTANAS`, `REZAGO_MESES`, `INCLUIR_ALPHA` |
+| `analisis_sensibilidad.py` | `VENTANAS_BETA`, `FRECUENCIAS_REBALANCEO`, `MODELO_MANUAL` |
 | `optimizar_modelos.py` | `VENTANAS_BETA`, `MIN_OBS_GRID`, `VENTANAS_FACTOR`, `FRECUENCIA_REESTIMACION`, `REZAGO_FACTOR`, `MIN_ACCIONES_IC`, `MIN_PERIODOS`, `ESTANDARIZAR`, `ESTANDARIZAR_Y`, `ENTRENAR_CON_HISTORIAL` |
 
 ---
