@@ -3,3 +3,4 @@ openpyxl
 yfinance
 requests
 numpy
+matplotlib

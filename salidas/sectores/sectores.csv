@@ -1,0 +1,180 @@
+ticker,sector,industria,nombre,fuente
+AAPL,Technology,Consumer Electronics,Apple Inc.,yahoo
+ABBV,Healthcare,Drug Manufacturers - General,AbbVie Inc.,yahoo
+ABT,Healthcare,Medical Devices,Abbott Laboratories,yahoo
+ACN,Technology,Information Technology Services,Accenture plc,yahoo
+ADBE,Technology,Software - Application,Adobe Inc.,yahoo
+ADI,Technology,Semiconductors,"Analog Devices, Inc.",yahoo
+ADP,Technology,Software - Application,"Automatic Data Processing, Inc.",yahoo
+AFL,Financial Services,Insurance - Life,Aflac Incorporated,yahoo
+AIG,Financial Services,Insurance - Diversified,"American International Group, Inc.",yahoo
+AMAT,Technology,Semiconductor Equipment & Materials,"Applied Materials, Inc.",yahoo
+AMD,Technology,Semiconductors,"Advanced Micro Devices, Inc.",yahoo
+AMGN,Healthcare,Drug Manufacturers - General,Amgen Inc.,yahoo
+AMT,Real Estate,REIT - Specialty,American Tower Corporation,yahoo
+AMZN,Consumer Cyclical,Internet Retail,"Amazon.com, Inc.",yahoo
+ANET,Technology,Computer Hardware,"Arista Networks, Inc.",yahoo
+APA,Energy,Oil & Gas E&P,APA Corporation,yahoo
+APD,Basic Materials,Specialty Chemicals,"Air Products and Chemicals, Inc.",yahoo
+APH,Technology,Electronic Components,Amphenol Corporation,yahoo
+APP,Communication Services,Advertising Agencies,AppLovin Corporation,yahoo
+AVGO,Technology,Semiconductors,Broadcom Inc.,yahoo
+AXP,Financial Services,Credit Services,American Express Company,yahoo
+BA,Industrials,Aerospace & Defense,The Boeing Company,yahoo
+BAC,Financial Services,Banks - Diversified,Bank of America Corporation,yahoo
+BAX,Healthcare,Medical Instruments & Supplies,Baxter International Inc.,yahoo
+BDX,Healthcare,Medical Instruments & Supplies,"Becton, Dickinson and Company",yahoo
+BIIB,Healthcare,Drug Manufacturers - General,Biogen Inc.,yahoo
+BKNG,Consumer Cyclical,Travel Services,Booking Holdings Inc.,yahoo
+BLK,Financial Services,Asset Management,"BlackRock, Inc.",yahoo
+BMY,Healthcare,Drug Manufacturers - General,Bristol-Myers Squibb Company,yahoo
+BNY,Financial Services,Banks - Diversified,The Bank of New York Mellon Corporation,yahoo
+BRK-B,Financial Services,Insurance - Diversified,Berkshire Hathaway Inc.,yahoo
+BSX,Healthcare,Medical Devices,Boston Scientific Corporation,yahoo
+BX,Financial Services,Asset Management,Blackstone Inc.,yahoo
+C,Financial Services,Banks - Diversified,Citigroup Inc.,yahoo
+CAT,Industrials,Farm & Heavy Construction Machinery,Caterpillar Inc.,yahoo
+CB,Financial Services,Insurance - Property & Casualty,Chubb Limited,yahoo
+CCI,Real Estate,REIT - Specialty,Crown Castle Inc.,yahoo
+CHTR,Communication Services,Telecom Services,"Charter Communications, Inc.",yahoo
+CI,Healthcare,Healthcare Plans,The Cigna Group,yahoo
+CL,Consumer Defensive,Household & Personal Products,Colgate-Palmolive Company,yahoo
+CMCSA,Communication Services,Telecom Services,Comcast Corporation,yahoo
+CME,Financial Services,Financial Data & Stock Exchanges,CME Group Inc.,yahoo
+COF,Financial Services,Credit Services,Capital One Financial Corporation,yahoo
+COP,Energy,Oil & Gas E&P,ConocoPhillips,yahoo
+COST,Consumer Defensive,Discount Stores,Costco Wholesale Corporation,yahoo
+CRM,Technology,Software - Application,"Salesforce, Inc.",yahoo
+CRWD,Technology,Software - Infrastructure,"CrowdStrike Holdings, Inc.",yahoo
+CSCO,Technology,Communication Equipment,"Cisco Systems, Inc.",yahoo
+CSX,Industrials,Railroads,CSX Corporation,yahoo
+CVS,Healthcare,Healthcare Plans,CVS Health Corporation,yahoo
+CVX,Energy,Oil & Gas Integrated,Chevron Corporation,yahoo
+D,Utilities,Utilities - Regulated Electric,"Dominion Energy, Inc.",yahoo
+DD,Basic Materials,Specialty Chemicals,"DuPont de Nemours, Inc.",yahoo
+DE,Industrials,Farm & Heavy Construction Machinery,Deere & Company,yahoo
+DELL,Technology,Computer Hardware,Dell Technologies Inc.,yahoo
+DHR,Healthcare,Diagnostics & Research,Danaher Corporation,yahoo
+DIS,Communication Services,Entertainment,The Walt Disney Company,yahoo
+DUK,Utilities,Utilities - Regulated Electric,Duke Energy Corporation,yahoo
+DVN,Energy,Oil & Gas E&P,Devon Energy Corporation,yahoo
+EBAY,Consumer Cyclical,Internet Retail,eBay Inc.,yahoo
+ELV,Healthcare,Healthcare Plans,"Elevance Health, Inc.",yahoo
+EMR,Industrials,Specialty Industrial Machinery,Emerson Electric Co.,yahoo
+EOG,Energy,Oil & Gas E&P,"EOG Resources, Inc.",yahoo
+EQIX,Real Estate,REIT - Specialty,"Equinix, Inc.",yahoo
+ETN,Industrials,Specialty Industrial Machinery,Eaton Corporation plc,yahoo
+EXC,Utilities,Utilities - Regulated Electric,Exelon Corporation,yahoo
+F,Consumer Cyclical,Auto Manufacturers,Ford Motor Company,yahoo
+FCX,Basic Materials,Copper,Freeport-McMoRan Inc.,yahoo
+FDX,Industrials,Integrated Freight & Logistics,FedEx Corporation,yahoo
+FIS,Technology,Information Technology Services,"Fidelity National Information Services, Inc.",yahoo
+FISV,Technology,,"Fiserv, Inc.",manual
+GD,Industrials,Aerospace & Defense,General Dynamics Corporation,yahoo
+GE,Industrials,Aerospace & Defense,GE Aerospace,yahoo
+GEV,Industrials,Specialty Industrial Machinery,GE Vernova Inc.,yahoo
+GILD,Healthcare,Drug Manufacturers - General,"Gilead Sciences, Inc.",yahoo
+GIS,Consumer Defensive,Packaged Foods,"General Mills, Inc.",yahoo
+GLW,Technology,Electronic Components,Corning Incorporated,yahoo
+GM,Consumer Cyclical,Auto Manufacturers,General Motors Company,yahoo
+GOOGL,Communication Services,Internet Content & Information,Alphabet Inc.,yahoo
+GS,Financial Services,Capital Markets,"The Goldman Sachs Group, Inc.",yahoo
+HAL,Energy,Oil & Gas Equipment & Services,Halliburton Company,yahoo
+HD,Consumer Cyclical,Home Improvement Retail,"The Home Depot, Inc.",yahoo
+HON,Industrials,Conglomerates,Honeywell International Inc.,yahoo
+HOOD,Financial Services,Capital Markets,"Robinhood Markets, Inc.",yahoo
+HPQ,Technology,Computer Hardware,HP Inc.,yahoo
+IBM,Technology,Information Technology Services,International Business Machines Corporation,yahoo
+INTC,Technology,Semiconductors,Intel Corporation,yahoo
+INTU,Technology,Software - Application,Intuit Inc.,yahoo
+ISRG,Healthcare,Medical Instruments & Supplies,"Intuitive Surgical, Inc.",yahoo
+ITW,Industrials,Specialty Industrial Machinery,Illinois Tool Works Inc.,yahoo
+JNJ,Healthcare,Drug Manufacturers - General,Johnson & Johnson,yahoo
+JPM,Financial Services,Banks - Diversified,JPMorgan Chase & Co.,yahoo
+KHC,Consumer Defensive,Packaged Foods,The Kraft Heinz Company,yahoo
+KLAC,Technology,Semiconductor Equipment & Materials,KLA Corporation,yahoo
+KMB,Consumer Defensive,Household & Personal Products,Kimberly-Clark Corporation,yahoo
+KMI,Energy,Oil & Gas Midstream,"Kinder Morgan, Inc.",yahoo
+KO,Consumer Defensive,Beverages - Non-Alcoholic,The Coca-Cola Company,yahoo
+LIN,Basic Materials,Specialty Chemicals,Linde plc,yahoo
+LLY,Healthcare,Drug Manufacturers - General,Eli Lilly and Company,yahoo
+LMT,Industrials,Aerospace & Defense,Lockheed Martin Corporation,yahoo
+LOW,Consumer Cyclical,Home Improvement Retail,"Lowe's Companies, Inc.",yahoo
+LRCX,Technology,Semiconductor Equipment & Materials,Lam Research Corporation,yahoo
+LYB,Basic Materials,Specialty Chemicals,LyondellBasell Industries N.V.,yahoo
+MA,Financial Services,Credit Services,Mastercard Incorporated,yahoo
+MCD,Consumer Cyclical,Restaurants,McDonald's Corporation,yahoo
+MCK,Healthcare,Medical Distribution,McKesson Corporation,yahoo
+MDLZ,Consumer Defensive,Confectioners,"Mondelez International, Inc.",yahoo
+MDT,Healthcare,Medical Devices,Medtronic plc,yahoo
+MET,Financial Services,Insurance - Life,"MetLife, Inc.",yahoo
+META,Communication Services,Internet Content & Information,"Meta Platforms, Inc.",yahoo
+MMM,Industrials,Conglomerates,3M Company,yahoo
+MO,Consumer Defensive,Tobacco,"Altria Group, Inc.",yahoo
+MPC,Energy,Oil & Gas Refining & Marketing,Marathon Petroleum Corporation,yahoo
+MRK,Healthcare,Drug Manufacturers - General,"Merck & Co., Inc.",yahoo
+MRNA,Healthcare,Biotechnology,"Moderna, Inc.",yahoo
+MRSH,Financial Services,Insurance Brokers,"Marsh & McLennan Companies, Inc.",yahoo
+MRVL,Technology,Semiconductors,"Marvell Technology, Inc.",yahoo
+MS,Financial Services,Capital Markets,Morgan Stanley,yahoo
+MSFT,Technology,Software - Infrastructure,Microsoft Corporation,yahoo
+MU,Technology,Semiconductors,"Micron Technology, Inc.",yahoo
+NEE,Utilities,Utilities - Regulated Electric,"NextEra Energy, Inc.",yahoo
+NEM,Basic Materials,Gold,Newmont Corporation,yahoo
+NFLX,Communication Services,Entertainment,"Netflix, Inc.",yahoo
+NKE,Consumer Cyclical,Footwear & Accessories,"NIKE, Inc.",yahoo
+NOC,Industrials,Aerospace & Defense,Northrop Grumman Corporation,yahoo
+NOV,Energy,Oil & Gas Equipment & Services,NOV Inc.,yahoo
+NOW,Technology,Software - Application,"ServiceNow, Inc.",yahoo
+NVDA,Technology,Semiconductors,NVIDIA Corporation,yahoo
+ORCL,Technology,Software - Infrastructure,Oracle Corporation,yahoo
+OXY,Energy,Oil & Gas E&P,Occidental Petroleum Corporation,yahoo
+PANW,Technology,Software - Infrastructure,"Palo Alto Networks, Inc.",yahoo
+PEP,Consumer Defensive,Beverages - Non-Alcoholic,"PepsiCo, Inc.",yahoo
+PFE,Healthcare,Drug Manufacturers - General,Pfizer Inc.,yahoo
+PG,Consumer Defensive,Household & Personal Products,The Procter & Gamble Company,yahoo
+PGR,Financial Services,Insurance - Property & Casualty,The Progressive Corporation,yahoo
+PH,Industrials,Specialty Industrial Machinery,Parker-Hannifin Corporation,yahoo
+PLD,Real Estate,REIT - Industrial,"Prologis, Inc.",yahoo
+PLTR,Technology,Software - Infrastructure,Palantir Technologies Inc.,yahoo
+PM,Consumer Defensive,Tobacco,Philip Morris International Inc.,yahoo
+PNC,Financial Services,Banks - Regional,"The PNC Financial Services Group, Inc.",yahoo
+PRU,Financial Services,Insurance - Life,"Prudential Financial, Inc.",yahoo
+PSX,Energy,Oil & Gas Refining & Marketing,Phillips 66,yahoo
+PYPL,Financial Services,Credit Services,"PayPal Holdings, Inc.",yahoo
+QCOM,Technology,Semiconductors,QUALCOMM Incorporated,yahoo
+REGN,Healthcare,Biotechnology,"Regeneron Pharmaceuticals, Inc.",yahoo
+RTX,Industrials,Aerospace & Defense,RTX Corporation,yahoo
+SBUX,Consumer Cyclical,Restaurants,Starbucks Corporation,yahoo
+SCHW,Financial Services,Capital Markets,The Charles Schwab Corporation,yahoo
+SLB,Energy,Oil & Gas Equipment & Services,SLB N.V.,yahoo
+SNDK,Technology,Computer Hardware,Sandisk Corporation,yahoo
+SO,Utilities,Utilities - Regulated Electric,The Southern Company,yahoo
+SPG,Real Estate,REIT - Retail,"Simon Property Group, Inc.",yahoo
+SPGI,Financial Services,Financial Data & Stock Exchanges,S&P Global Inc.,yahoo
+STX,Technology,Computer Hardware,Seagate Technology Holdings plc,yahoo
+SYK,Healthcare,Medical Devices,Stryker Corporation,yahoo
+T,Communication Services,Telecom Services,AT&T Inc.,yahoo
+TFC,Financial Services,Banks - Regional,Truist Financial Corporation,yahoo
+TGT,Consumer Defensive,Discount Stores,Target Corporation,yahoo
+TJX,Consumer Cyclical,Apparel Retail,"The TJX Companies, Inc.",yahoo
+TMO,Healthcare,Diagnostics & Research,Thermo Fisher Scientific Inc.,yahoo
+TMUS,Communication Services,Telecom Services,"T-Mobile US, Inc.",yahoo
+TRV,Financial Services,Insurance - Property & Casualty,"The Travelers Companies, Inc.",yahoo
+TSLA,Consumer Cyclical,Auto Manufacturers,"Tesla, Inc.",yahoo
+TXN,Technology,Semiconductors,Texas Instruments Incorporated,yahoo
+UBER,Technology,Software - Application,"Uber Technologies, Inc.",yahoo
+UNH,Healthcare,Healthcare Plans,UnitedHealth Group Incorporated,yahoo
+UNP,Industrials,Railroads,Union Pacific Corporation,yahoo
+UPS,Industrials,Integrated Freight & Logistics,"United Parcel Service, Inc.",yahoo
+USB,Financial Services,Banks - Regional,U.S. Bancorp,yahoo
+V,Financial Services,Credit Services,Visa Inc.,yahoo
+VLO,Energy,Oil & Gas Refining & Marketing,Valero Energy Corporation,yahoo
+VRTX,Healthcare,Biotechnology,Vertex Pharmaceuticals Incorporated,yahoo
+VZ,Communication Services,Telecom Services,Verizon Communications Inc.,yahoo
+WDC,Technology,Computer Hardware,Western Digital Corporation,yahoo
+WELL,Real Estate,REIT - Healthcare Facilities,Welltower Inc.,yahoo
+WFC,Financial Services,Banks - Diversified,Wells Fargo & Company,yahoo
+WMT,Consumer Defensive,Discount Stores,Walmart Inc.,yahoo
+XOM,Energy,Oil & Gas Integrated,ExxonMobil Holdings Corporation,yahoo
+ZTS,Healthcare,Drug Manufacturers - Specialty & Generic,Zoetis Inc.,yahoo
