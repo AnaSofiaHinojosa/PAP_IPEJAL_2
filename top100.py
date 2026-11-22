@@ -17,7 +17,7 @@ import difflib
 # ticker haría descargar los datos del comprador en lugar de los de la empresa.
 #
 # Solo están los casos que ya revisamos. Las filas que salgan como REVISAR
-# en revision_top100_anual.csv se deciden a mano y se agregan aquí.
+# en salidas/universo/revision_top100_anual.csv se deciden a mano y se agregan aquí.
 EQUIVALENCIAS_MANUALES = {
     # ================================================================== #
     # Regla: misma empresa que cambió de nombre/ticker o su sucesora legal
@@ -417,7 +417,7 @@ class AnnualTop100Selector:
         if len(sin):
             print(f"  {sin['Firma_id'].nunique()} empresas sin fuente de datos por ahora "
                   f"(estados: {sin.drop_duplicates('Firma_id')['Estado'].value_counts().to_dict()}). "
-                  "Ver revision_top100_anual.csv")
+                  "Ver salidas/universo/revision_top100_anual.csv")
         return self.seleccion
 
     # ------------------------------------------------------------------ #
@@ -443,8 +443,8 @@ class AnnualTop100Selector:
                      Fuente=("Fuente", "last"))
                 .reset_index())
 
-    def export_summary_to_csv(self, output_path: str = "seleccion_anual_top100.csv",
-                              revision_path: str = "revision_top100_anual.csv"):
+    def export_summary_to_csv(self, output_path: str = "salidas/universo/seleccion_anual_top100.csv",
+                              revision_path: str = "salidas/universo/revision_top100_anual.csv"):
         if self.seleccion.empty:
             self.calculate_rankings()
         self.seleccion.to_csv(output_path, index=False, encoding="utf-8-sig")

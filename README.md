@@ -18,7 +18,7 @@ El proyecto se divide en 5 partes que se corren **en orden**, porque cada una co
 
 ## 1. Diagrama de conexiones entre archivos
 
-Las flechas continuas (`-->`) son `import` entre scripts. Las flechas punteadas (`-.->`) son archivos de datos que se leen o se escriben. Las variantes `sin_restriccion` y `sin_estandarizar` van agrupadas en un solo nodo por etapa. El mismo diagrama está en `diagrama_pipeline.md`.
+Las flechas continuas (`-->`) son `import` entre scripts. Las flechas punteadas (`-.->`) son archivos de datos que se leen o se escriben. Los scripts de las Partes 2, 3 y 4 corren los 4 modelos del diseño 2x2 (ya no hay un script por variante). El mismo diagrama está en `diagrama_pipeline.md` (pendiente de actualizar con estos cambios).
 
 ```mermaid
 flowchart TD
@@ -55,7 +55,7 @@ flowchart TD
     MAIN --> FAC
     DATOS --> TOP
 
-    TOP -.-> SEL[("seleccion_anual_top100.csv")]
+    TOP -.-> SEL[("salidas/universo/<br/>seleccion_anual_top100.csv")]
     MAIN -.-> EMP[("salidas/empresas/TICKER.xlsx<br/>salidas/mercado.xlsx")]
     SEL -.-> FAC
     EMP -.-> FAC
@@ -64,35 +64,30 @@ flowchart TD
     %% ===== PARTE 2 =====
     subgraph P2["Parte 2: Matriz de exposiciones"]
         EXPO["estimar_exposiciones.py<br/>regresion con suma beta = 1"]
-        GMAT["generar_matriz.py"]
-        GMATV["generar_matriz_sin_restriccion.py<br/>generar_matriz_sin_estandarizar.py<br/>generar_matriz_sin_restriccion_sin_estandarizar.py"]
+        GMAT["generar_matriz.py<br/>(modelos 1 a 4, --modelo N)"]
     end
 
     REG -.-> GMAT
     GMAT --> EXPO
-    GMATV --> GMAT
-    GMATV --> EXPO
-    GMAT -.-> MEXP[("salidas/exposiciones/<br/>matriz_exposiciones.csv<br/>factores_estandarizacion.csv")]
+    GMAT -.-> MEXP[("salidas/exposiciones*/<br/>matriz_exposiciones.csv<br/>factores_estandarizacion.csv")]
 
     %% ===== PARTE 3 =====
     subgraph P3["Parte 3: Rendimiento esperado"]
         ERES["estimar_rendimiento.py<br/>factor esperado + E[R]"]
-        GREN["generar_rendimientos.py"]
-        GRENV["generar_rendimientos_sin_restriccion.py<br/>generar_rendimientos_sin_estandarizar.py<br/>generar_rendimientos_sin_restriccion_sin_estandarizar.py"]
+        GREN["generar_rendimientos.py<br/>(modelos 1 a 4, --modelo N)"]
     end
 
     MEXP -.-> GREN
     REG -.-> GREN
+    GREN --> GMAT
     GREN --> EXPO
     GREN --> ERES
-    GRENV --> GREN
-    GREN -.-> RESP[("salidas/rendimientos_esperados/")]
+    GREN -.-> RESP[("salidas/rendimientos_esperados*/")]
 
     %% ===== PARTE 4 =====
     subgraph P4["Parte 4: Backtesting y seleccion"]
         BACK["backtesting.py<br/>betas walk-forward + IC"]
-        OPT["optimizar_modelos.py<br/>rejilla de 36 modelos"]
-        OPTV["optimizar_modelos_sin_restriccion.py<br/>optimizar_modelos_sin_estandarizar.py<br/>optimizar_modelos_sin_restriccion_sin_estandarizar.py"]
+        OPT["optimizar_modelos.py<br/>rejilla de 36 configuraciones<br/>(modelos 1 a 4, --modelo N)"]
         COMP["comparar_modelos.py<br/>comparacion 2x2 de los 4 modelos"]
     end
 
@@ -101,7 +96,6 @@ flowchart TD
     OPT --> EXPO
     BACK --> EXPO
     BACK --> ERES
-    OPTV --> OPT
     OPT -.-> BT[("salidas/backtesting*/<br/>comparacion_modelos.csv<br/>mejor_modelo_ic_serie.csv")]
     BT -.-> COMP
     COMP --> OPT
@@ -189,7 +183,7 @@ flowchart TD
     classDef datos fill:#fef9c3,stroke:#a16207,color:#111;
     classDef externo fill:#dcfce7,stroke:#15803d,color:#111;
 
-    class MAIN,DATOS,TOP,YAH,SEC,FAC,EXPO,GMAT,GMATV,ERES,GREN,GRENV,BACK,OPT,OPTV,COMP,CAL,AJ,BAJ,EST,MET,SENS,SECS,BHB,VAL,DIAG,REVC,RANK,PR2 script;
+    class MAIN,DATOS,TOP,YAH,SEC,FAC,EXPO,GMAT,ERES,GREN,BACK,OPT,COMP,CAL,AJ,BAJ,EST,MET,SENS,SECS,BHB,VAL,DIAG,REVC,RANK,PR2 script;
     class D1,D2,D3,SEL,EMP,REG,MEXP,RESP,BT,CMP,CALD,ESTD,SEND,SECD,BHBD,VCSV,DCSV,COBD,RANKD datos;
     class EXT1,EXT2 externo;
 ```
@@ -247,15 +241,15 @@ PAP_IPEJAL_2/
 │
 ├── Parte 2: matriz de exposiciones
 │   ├── estimar_exposiciones.py        regresión con restricción
-│   └── generar_matriz.py              orquesta la Parte 2
+│   └── generar_matriz.py              orquesta la Parte 2 (los 4 modelos; --modelo N para uno solo)
 │
 ├── Parte 3: rendimiento esperado
 │   ├── estimar_rendimiento.py         factor esperado + rendimiento esperado
-│   └── generar_rendimientos.py        orquesta la Parte 3
+│   └── generar_rendimientos.py        orquesta la Parte 3 (los 4 modelos; --modelo N para uno solo)
 │
 ├── Parte 4: backtesting y selección
 │   ├── backtesting.py                 betas walk-forward, rendimiento esperado e IC
-│   ├── optimizar_modelos.py           búsqueda en rejilla del mejor modelo
+│   ├── optimizar_modelos.py           búsqueda en rejilla del mejor modelo (los 4 modelos; --modelo N para uno solo)
 │   └── comparar_modelos.py            comparación de los 4 modelos (diseño 2x2)
 │
 ├── Parte 5: calibración, estrategia, sensibilidad y atribución
@@ -268,17 +262,6 @@ PAP_IPEJAL_2/
 │   ├── descargar_sectores.py          sector de cada empresa (Yahoo Finance)
 │   └── atribucion_bhb.py              atribución Brinson-Hood-Beebower por pierna
 │
-├── Variantes (modelos 2, 3 y 4)
-│   ├── generar_matriz_sin_restriccion.py
-│   ├── generar_matriz_sin_estandarizar.py
-│   ├── generar_matriz_sin_restriccion_sin_estandarizar.py
-│   ├── generar_rendimientos_sin_restriccion.py
-│   ├── generar_rendimientos_sin_estandarizar.py
-│   ├── generar_rendimientos_sin_restriccion_sin_estandarizar.py
-│   ├── optimizar_modelos_sin_restriccion.py
-│   ├── optimizar_modelos_sin_estandarizar.py
-│   └── optimizar_modelos_sin_restriccion_sin_estandarizar.py
-│
 ├── Utilidades
 │   ├── Validar Salidas.py             detecta datos sospechosos en salidas/empresas
 │   ├── Diagnostico.py                 qué tags XBRL trae la SEC para un ticker
@@ -287,15 +270,14 @@ PAP_IPEJAL_2/
 │   └── prueba_r2.py                   diagnóstico de R² negativos en la matriz de exposiciones (solo imprime)
 │
 ├── sectores_manual.csv                (opcional) ticker,sector: correcciones que mandan sobre Yahoo
-├── seleccion_anual_top100.csv         top 100 por año (salida de top100.py)
-├── revision_top100_anual.csv          estado de cada empresa-año (OK, MANUAL, REVISAR...)
-├── universo_sp500_completo.csv        universo completo por año
-├── universo_final_top100_global.csv   (universo de referencia)
-├── universo_sp500.csv                 (universo de referencia)
 ├── diagrama_pipeline.md               el diagrama de la sección 1
 ├── requirements.txt
 ├── LICENSE
 └── salidas/                           TODAS las salidas del pipeline (se crea sola)
+    ├── universo/                          universo y selección del top 100 (Parte 1, main.py)
+    │   ├── seleccion_anual_top100.csv         top 100 por año (salida de top100.py; la lee construir_factores.py)
+    │   ├── revision_top100_anual.csv          estado de cada empresa-año (OK, MANUAL, REVISAR...)
+    │   └── universo_sp500_completo.csv        universo completo por año
     ├── empresas/<TICKER>.xlsx             precios, EPS, acciones e info (Parte 1)
     ├── empresas_anteriores/               tickers que salieron del universo
     ├── mercado.xlsx
@@ -370,7 +352,7 @@ PAP_IPEJAL_2/
         └── atribucion_bhb.xlsx, atribucion_bhb.png
 ```
 
-`Data/` nunca se escribe: es solo de entrada. Todo lo que el pipeline produce vive en `salidas/` (más los CSV de selección en la raíz).
+`Data/` nunca se escribe: es solo de entrada. Todo lo que el pipeline produce vive en `salidas/`.
 
 **Importante:** todos los scripts usan rutas **relativas** (`Path("salidas/...")`), así que **siempre corre los scripts parado en la raíz del repo** (`PAP_IPEJAL_2/`), nunca desde otra carpeta.
 
@@ -384,39 +366,36 @@ cd PAP_IPEJAL_2
 # Parte 1: universo, precios, fundamentales y factores
 python main.py
 
-# Parte 2: matriz de exposiciones (betas)
+# Parte 2: matriz de exposiciones (betas) de los 4 modelos
 python generar_matriz.py
 
-# Parte 3: rendimiento esperado por acción
+# Parte 3: rendimiento esperado por acción de los 4 modelos
 python generar_rendimientos.py
 
-# Parte 4: backtesting y selección del mejor modelo
+# Parte 4: backtesting y selección del mejor modelo, para los 4 modelos
 python optimizar_modelos.py
-```
-
-Para el diseño 2x2 (modelos 2, 3 y 4) y su comparación:
-
-```bash
-# Modelo 2: sin restricción sum(beta)=1
-python generar_matriz_sin_restriccion.py
-python generar_rendimientos_sin_restriccion.py
-python optimizar_modelos_sin_restriccion.py
-
-# Modelo 3: sin estandarizar
-python generar_matriz_sin_estandarizar.py
-python generar_rendimientos_sin_estandarizar.py
-python optimizar_modelos_sin_estandarizar.py
-
-# Modelo 4: sin restricción y sin estandarizar
-python generar_matriz_sin_restriccion_sin_estandarizar.py
-python generar_rendimientos_sin_restriccion_sin_estandarizar.py
-python optimizar_modelos_sin_restriccion_sin_estandarizar.py
 
 # Comparación de los 4 modelos
 python comparar_modelos.py
 ```
 
-Parte 5 (requiere haber corrido los `optimizar_modelos*.py` de los **4 modelos**):
+Sin argumentos, `generar_matriz.py`, `generar_rendimientos.py` y `optimizar_modelos.py` corren los 4 modelos del diseño 2x2 en orden (lista `MODELOS_A_CORRER` al inicio de cada script). Para correr solo algunos:
+
+```bash
+python optimizar_modelos.py --modelo 3      # solo el modelo 3
+python optimizar_modelos.py --modelo 1 3    # modelos 1 y 3
+```
+
+Estos comandos sustituyen a los antiguos scripts por variante (`*_sin_restriccion.py`, `*_sin_estandarizar.py`, `*_sin_restriccion_sin_estandarizar.py`), que se eliminaron:
+
+| Antes | Ahora |
+|---|---|
+| `python generar_matriz_sin_restriccion.py` | `python generar_matriz.py --modelo 2` |
+| `python generar_matriz_sin_estandarizar.py` | `python generar_matriz.py --modelo 3` |
+| `python generar_matriz_sin_restriccion_sin_estandarizar.py` | `python generar_matriz.py --modelo 4` |
+| (lo mismo con `generar_rendimientos_*` y `optimizar_modelos_*`) | `python generar_rendimientos.py --modelo N`, `python optimizar_modelos.py --modelo N` |
+
+Parte 5 (requiere haber corrido `optimizar_modelos.py` para los **4 modelos**):
 
 ```bash
 python calibrar_modelos.py          # A, B y C de cada modelo; elige el modelo final
@@ -466,11 +445,15 @@ Cada script imprime en consola un resumen de lo que hizo y avisos de cobertura y
 
 ### Parte 2: `generar_matriz.py` (usa `estimar_exposiciones.py`)
 
+Corre los 4 modelos del diseño 2x2; lo que cambia entre ellos (restricción, estandarización y carpeta de salida) está en la tabla `MODELOS` al inicio del script. Lo que se describe abajo es el modelo 1. En los modelos sin estandarizar (3 y 4) se borra cualquier `factores_estandarizacion.csv` de una corrida anterior, para que la Parte 3 no estandarice por error. En los modelos sin restricción se compara su R² contra el modelo con restricción de la misma escala (2 contra 1 y 4 contra 3).
+
 Para cada acción, regresión de su rendimiento en exceso de `rf` contra los 6 factores, con la restricción ∑β = 1 impuesta de forma exacta: se despeja el beta de un factor base (MERCADO) y se sustituye en la ecuación, sin optimización numérica. Los factores se estandarizan una sola vez con la media y desviación de toda su serie, y esos valores se guardan en `factores_estandarizacion.csv` para que la Parte 3 use la misma escala. Guarda `matriz_exposiciones.csv/.xlsx` con alpha, un beta por factor, R², n_obs y la suma de betas (para validar la restricción).
 
 Con `ESTANDARIZAR_Y = True` (valor que usa el equipo) el rendimiento en exceso de las acciones también se estandariza, con **una sola** media y desviación calculadas sobre todos los rendimientos juntos (todas las acciones y todos los meses). La indicación del curso fue estandarizar por factor; estandarizar también `y` es una decisión adicional del equipo. Consecuencia: en los modelos 1 y 2 el rendimiento esperado queda en **unidades estandarizadas, no en % mensual** (en los modelos 3 y 4 sí está en rendimiento mensual). El IC y el ordenamiento de acciones no cambian, pero esas cifras no se leen como porcentajes.
 
 ### Parte 3: `generar_rendimientos.py` (usa `estimar_rendimiento.py`)
+
+Corre los 4 modelos. La carpeta de la matriz que lee y si el modelo estandariza los toma de `generar_matriz.MODELOS`; solo sus carpetas de salida (`SALIDAS`) están en este script. En los modelos 3 y 4 se detiene con error si encuentra un `factores_estandarizacion.csv` en la carpeta de la matriz.
 
 Para cada factor ya estandarizado, calcula un rendimiento esperado mensual: rolling mean de los últimos 3, 6 o 12 meses, rezagado 1 mes para no ver el futuro. Luego, para cada acción:
 
@@ -482,22 +465,26 @@ usando el beta fijo de la Parte 2 y el factor esperado (que sí varía mes a mes
 
 ### Parte 4: `optimizar_modelos.py` (usa `backtesting.py`)
 
+Corre la rejilla para los 4 modelos (tabla `MODELOS` al inicio del script: `restringir_suma`, `estandarizar`, `estandarizar_y` y carpeta de salida). Otros scripts importan de aquí `cargar_rendimientos`, `cargar_factores`, `serie_ic` y `resumir_ic`.
+
 - **Betas walk-forward:** en cada fecha de corte los betas se reestiman usando solo datos hasta ese corte, con ventana expansiva (`None`) o móvil (36, 60 o 120 meses). Los factores (y el rendimiento en exceso, si `ESTANDARIZAR_Y`) se estandarizan con la media y desviación de ese mismo corte.
 - **Rendimiento esperado:** para cada mes se usa el beta del corte más reciente anterior y el factor esperado construido con la misma estandarización.
 - **IC:** correlación de Spearman mensual entre el rendimiento esperado y el real, medida solo con las empresas del Top 100 de ese mes. Se resume con IC medio, IC std, IC Ratio, t-stat y hit rate.
 - **Rejilla:** 4 ventanas de beta × 3 mínimos de observaciones × 3 ventanas de factor = 36 modelos, todos evaluados en las mismas fechas.
-- **Orden y "ganador":** `comparacion_modelos.csv` queda ordenado por **IC Ratio**, y `mejor_modelo_*` (IC, E[R] y betas por fecha) corresponde a la fila con mayor IC Ratio. Ese no es necesariamente el modelo final: la Parte 5 elige por IC medio.
+- **Orden y "ganador":** `comparacion_modelos.csv` queda ordenado por **IC Ratio**, y `mejor_modelo_*` (IC, E[R] y betas por fecha) corresponde a la fila con mayor IC Ratio. La columna `ranking_promedio` es solo informativa (antes la consola la llamaba "criterio de selección" por error; ya se corrigió el texto). Ese no es necesariamente el modelo final: la Parte 5 elige por IC medio.
 
 ### Diseño 2x2 (`comparar_modelos.py`)
 
-| Modelo | Factores | Betas | Carpeta de backtesting |
-|---|---|---|---|
-| 1 (base) | Estandarizados | ∑β = 1 | `backtesting/` |
-| 2 | Estandarizados | Libres | `backtesting_sin_restriccion/` |
-| 3 | Sin estandarizar | ∑β = 1 | `backtesting_sin_estandarizar/` |
-| 4 | Sin estandarizar | Libres | `backtesting_sin_restriccion_sin_estandarizar/` |
+| Modelo | Factores | Betas | Carpeta de backtesting | Cómo correrlo |
+|---|---|---|---|---|
+| 1 (base) | Estandarizados | ∑β = 1 | `backtesting/` | `--modelo 1` |
+| 2 | Estandarizados | Libres | `backtesting_sin_restriccion/` | `--modelo 2` |
+| 3 | Sin estandarizar | ∑β = 1 | `backtesting_sin_estandarizar/` | `--modelo 3` |
+| 4 | Sin estandarizar | Libres | `backtesting_sin_restriccion_sin_estandarizar/` | `--modelo 4` |
 
-`comparar_modelos.py` no recalcula nada: lee las salidas de cada `optimizar_modelos*.py` y compara (A) el ganador de cada modelo, (B) los ganadores en las mismas fechas con prueba pareada, (C) la misma configuración en los 4 modelos y (D) los efectos principales del 2x2.
+Las carpetas de las Partes 2 y 3 siguen el mismo patrón de nombres (`exposiciones*/`, `rendimientos_esperados*/`).
+
+`comparar_modelos.py` no recalcula nada: lee las salidas de `optimizar_modelos.py` de cada modelo y compara (A) el ganador de cada modelo, (B) los ganadores en las mismas fechas con prueba pareada, (C) la misma configuración en los 4 modelos y (D) los efectos principales del 2x2.
 
 ### Parte 5: calibración, estrategia, sensibilidad y atribución
 
@@ -566,9 +553,9 @@ Todos están al inicio de cada script:
 |---|---|
 | `main.py` | `TOP_N`, `ANIO_INICIO` |
 | `construir_factores.py` | `CORTE`, `MIN_EMPRESAS`, `PONDERACION`, `MESES_MOMENTUM`, `MESES_VOL`, `ORTOGONALIZAR`, `UMBRAL_CORRELACION` |
-| `generar_matriz.py` | `FACTORES`, `FACTOR_BASE`, `RESTRINGIR_SUMA`, `MIN_OBS`, `VENTANA_MESES`, `R2_AVISO`, `ESTANDARIZAR`, `ESTANDARIZAR_Y`, `ENTRENAR_CON_HISTORIAL` |
-| `generar_rendimientos.py` | `VENTANAS`, `REZAGO_MESES`, `INCLUIR_ALPHA` |
-| `optimizar_modelos.py` | `VENTANAS_BETA`, `MIN_OBS_GRID`, `VENTANAS_FACTOR`, `FRECUENCIA_REESTIMACION`, `REZAGO_FACTOR`, `MIN_ACCIONES_IC`, `MIN_PERIODOS`, `ESTANDARIZAR`, `ESTANDARIZAR_Y`, `ENTRENAR_CON_HISTORIAL` |
+| `generar_matriz.py` | `FACTORES`, `FACTOR_BASE`, `MIN_OBS`, `VENTANA_MESES`, `R2_AVISO`, `ENTRENAR_CON_HISTORIAL`, `MODELOS` (restricción, estandarización y carpeta de cada modelo; `RESTRINGIR_SUMA`, `ESTANDARIZAR` y `ESTANDARIZAR_Y` son los valores del modelo 1), `MODELOS_A_CORRER` |
+| `generar_rendimientos.py` | `VENTANAS`, `REZAGO_MESES`, `INCLUIR_ALPHA`, `SALIDAS`, `MODELOS_A_CORRER` (lo demás de cada modelo viene de `generar_matriz.MODELOS`) |
+| `optimizar_modelos.py` | `VENTANAS_BETA`, `MIN_OBS_GRID`, `VENTANAS_FACTOR`, `FRECUENCIA_REESTIMACION`, `REZAGO_FACTOR`, `MIN_ACCIONES_IC`, `MIN_PERIODOS`, `ENTRENAR_CON_HISTORIAL`, `MODELOS` (restricción, estandarización y carpeta de cada modelo), `MODELOS_A_CORRER` |
 | `calibrar_modelos.py` | `FRECUENCIA_REESTIMACION`, `REZAGO_FACTOR`, `MIN_ACCIONES_IC`, `MIN_PERIODOS`, `ENTRENAR_CON_HISTORIAL`, `MODOS_IC`, `VENTANAS_IC`, `MIN_PERIODOS_IC`, `KAPPAS`, `CONFIG_DEFAULT`, y las banderas de cada modelo en `MODELOS` |
 | `ajustes.py` | `PISO_SENAL`, `MODOS_PESO` |
 | `estrategia_cuantilica.py` | `N_LARGO`, `N_CORTO`, `N_CUANTILES`, `COSTO_BPS`, `VENTANA_SHARPE_MOVIL`, `MODELO_MANUAL` |

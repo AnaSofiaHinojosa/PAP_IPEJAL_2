@@ -18,7 +18,7 @@ from sec_edgar_fundamentals import (
 )
 
 CARPETA_SALIDA = Path("salidas")
-
+CARPETA_UNIVERSO = CARPETA_SALIDA / "universo"
 
 def normalizar_ticker_yahoo(ticker: str) -> str:
     """Yahoo Finance usa guion en vez de punto para acciones de doble clase,
@@ -327,7 +327,8 @@ def main():
     df_fs = FactSetScreeningLoader(FACTSET_DIR).build() if Path(
         FACTSET_DIR).exists() else None
     df_pit = combinar_fuentes(df_hold, df_fs)
-    df_pit.to_csv("universo_sp500_completo.csv", index=False)
+    CARPETA_UNIVERSO.mkdir(parents=True, exist_ok=True)
+    df_pit.to_csv(CARPETA_UNIVERSO / "universo_sp500_completo.csv", index=False)
     print(df_pit.groupby("Year")["Fuente"].first().to_string())
 
     # 3. Top 100 por market cap de CADA año (al cierre de diciembre anterior)
@@ -336,8 +337,8 @@ def main():
     selector = AnnualTop100Selector(
         df_pit, anio_inicio=ANIO_INICIO, top_n=TOP_N)
     selector.calculate_rankings()
-    selector.export_summary_to_csv("seleccion_anual_top100.csv",
-                                   revision_path="revision_top100_anual.csv")
+    selector.export_summary_to_csv(str(CARPETA_UNIVERSO / "seleccion_anual_top100.csv"),
+                                   revision_path=str(CARPETA_UNIVERSO / "revision_top100_anual.csv"))
 
     # 4. Lista de tickers: todas las empresas que estuvieron en el top 100
     #    algún año y que tienen fuente de datos

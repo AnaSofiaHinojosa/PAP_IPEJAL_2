@@ -4,7 +4,7 @@ import pandas as pd
 
 CARPETA = Path("salidas")
 SALIDA = CARPETA / "regresion"
-SELECCION = Path("seleccion_anual_top100.csv")   # salida de top100.py
+SELECCION = Path("salidas/universo/seleccion_anual_top100.csv")   # salida de top100.py
 FECHA_INICIO = "2010-01-01"   # primer mes de los factores (regla del profesor)
 
 CORTE = 0.30            # 30% de cada extremo (terciles)
@@ -198,7 +198,7 @@ def main():
         ("LIQUIDEZ", "30% menor rotación (volumen/acciones, prom. 3 meses) menos 30% mayor"),
         ("Formación", "Orden con datos al cierre de t-1; rendimiento del mes t (sin look-ahead)"),
         ("Universo", "Cada mes t: top 100 por market cap del S&P 500 al 31/12 del año anterior "
-                     "(seleccion_anual_top100.csv); ver membresia.csv"),
+                     "(salidas/universo/seleccion_anual_top100.csv); ver membresia.csv"),
         ("Ventana", f"Desde {FECHA_INICIO[:7]}"),
         ("Ponderación", PONDERACION),
         ("Ortogonalización", ", ".join(

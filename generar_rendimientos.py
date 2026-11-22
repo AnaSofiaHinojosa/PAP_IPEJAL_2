@@ -1,6 +1,22 @@
+"""
+Parte 3: rendimiento esperado mensual de cada acción, para los 4 modelos del diseño 2x2.
+
+Uso (desde la raíz del repo):
+    python generar_rendimientos.py                 # corre los modelos de MODELOS_A_CORRER (por defecto, los 4)
+    python generar_rendimientos.py --modelo 3      # solo el modelo 3
+    python generar_rendimientos.py --modelo 1 3    # modelos 1 y 3
+
+Sustituye a generar_rendimientos_sin_restriccion.py, generar_rendimientos_sin_estandarizar.py
+y generar_rendimientos_sin_restriccion_sin_estandarizar.py. Cada modelo lee la matriz que
+escribió generar_matriz.py y escribe en la misma carpeta que antes.
+"""
+
+import argparse
 from pathlib import Path
+
 import pandas as pd
 
+import generar_matriz as gm
 from estimar_exposiciones import FACTORES_DEFAULT
 from estimar_rendimiento import (
     aplicar_estandarizacion,
@@ -9,10 +25,7 @@ from estimar_rendimiento import (
     REZAGO_DEFAULT,
 )
 
-EXPOSICIONES = Path("salidas/exposiciones/matriz_exposiciones.csv")
-ESTANDARIZACION = Path("salidas/exposiciones/factores_estandarizacion.csv")
 FACTORES_CSV = Path("salidas/regresion/factores.csv")
-SALIDA = Path("salidas/rendimientos_esperados")
 
 # Parámetros ajustables por el equipo
 FACTORES = FACTORES_DEFAULT
@@ -23,12 +36,39 @@ REZAGO_MESES = REZAGO_DEFAULT
 # el enunciado solo pide sum(beta_k * factor_esperado_k)
 INCLUIR_ALPHA = False
 
+# Carpeta de salida de cada modelo. La carpeta de la matriz (entrada) y si el
+# modelo estandariza se toman de generar_matriz.MODELOS, para no repetirlos.
+SALIDAS = {
+    1: Path("salidas/rendimientos_esperados"),
+    2: Path("salidas/rendimientos_esperados_sin_restriccion"),
+    3: Path("salidas/rendimientos_esperados_sin_estandarizar"),
+    4: Path("salidas/rendimientos_esperados_sin_restriccion_sin_estandarizar"),
+}
 
-def main():
-    SALIDA.mkdir(parents=True, exist_ok=True)
+# Modelos que se corren con "python generar_rendimientos.py" sin argumentos.
+MODELOS_A_CORRER = [1, 2, 3, 4]
+
+
+def correr_modelo(modelo: int) -> None:
+    cfg = gm.MODELOS[modelo]
+    exposiciones = cfg["salida"] / "matriz_exposiciones.csv"
+    estandarizacion = cfg["salida"] / "factores_estandarizacion.csv"
+    salida = SALIDAS[modelo]
+
+    print(f"\n{'=' * 75}\n{cfg['nombre']}\n{'=' * 75}")
+
+    # En un modelo sin estandarizar, este archivo no debe existir: si existe,
+    # la matriz se generó con estandarización y el E[R] saldría en otra escala.
+    if not cfg["estandarizar"] and estandarizacion.exists():
+        raise RuntimeError(
+            f"Existe {estandarizacion}: la matriz del modelo {modelo} se generó con "
+            f"estandarización. Vuelve a correr: python generar_matriz.py --modelo {modelo}")
+
+    salida.mkdir(parents=True, exist_ok=True)
 
     print("Leyendo matriz de exposiciones (Parte 2) y factores (Parte 1)...")
-    matriz_exposiciones = pd.read_csv(EXPOSICIONES, index_col="ticker")
+    print(f"  matriz de: {exposiciones}")
+    matriz_exposiciones = pd.read_csv(exposiciones, index_col="ticker")
     factores_df = pd.read_csv(FACTORES_CSV)
     factores_df["fecha"] = pd.to_datetime(factores_df["fecha"])
     factores_df = factores_df.set_index("fecha").sort_index()
@@ -37,15 +77,18 @@ def main():
     if faltan:
         raise ValueError(f"Faltan factores en factores.csv: {faltan}")
 
-    if ESTANDARIZACION.exists():
-        stats = pd.read_csv(ESTANDARIZACION, index_col="factor")
-        print(f"  usando media/desviación de la Parte 2 ({ESTANDARIZACION}) "
+    if estandarizacion.exists():
+        stats = pd.read_csv(estandarizacion, index_col="factor")
+        print(f"  usando media/desviación de la Parte 2 ({estandarizacion}) "
               "para estandarizar los factores antes del rolling mean")
+    elif cfg["estandarizar"]:
+        stats = None
+        print(f"  AVISO: no encontré {estandarizacion} -> se usan los factores "
+              "crudos (sin estandarizar), aunque este modelo debería estandarizarlos. "
+              f"Vuelve a correr: python generar_matriz.py --modelo {modelo}")
     else:
         stats = None
-        print(f"  AVISO: no encontré {ESTANDARIZACION} -> se usan los factores "
-              "crudos (sin estandarizar). Esto es correcto solo si "
-              "generar_matriz.py se corrió con ESTANDARIZAR=False.")
+        print("  factores crudos (este modelo no estandariza)")
     factores_estandarizados = aplicar_estandarizacion(
         factores_df, FACTORES, stats)
 
@@ -77,7 +120,7 @@ def main():
             f"  {n_meses_validos} meses con al menos una acción con rendimiento esperado")
         print(f"  cobertura promedio (acción-mes con dato): {cobertura:.1%}")
 
-        archivo = SALIDA / f"rendimientos_esperados_ventana{ventana}.csv"
+        archivo = salida / f"rendimientos_esperados_ventana{ventana}.csv"
         rendimiento_esperado.to_csv(archivo)
         hojas_excel[f"ventana_{ventana}m"] = rendimiento_esperado
         resumen_filas.append({
@@ -88,14 +131,24 @@ def main():
         })
 
     resumen = pd.DataFrame(resumen_filas)
-    with pd.ExcelWriter(SALIDA / "rendimientos_esperados.xlsx", engine="openpyxl") as xw:
+    with pd.ExcelWriter(salida / "rendimientos_esperados.xlsx", engine="openpyxl") as xw:
         resumen.to_excel(xw, sheet_name="Resumen", index=False)
         for nombre, df in hojas_excel.items():
             df.reset_index().rename(columns={"index": "fecha"}).to_excel(
                 xw, sheet_name=nombre, index=False)
 
-    print(f"\nRendimientos esperados guardados en {SALIDA}")
+    print(f"\nRendimientos esperados (modelo {modelo}) guardados en {salida}")
+
+
+def main(modelos: list[int] | None = None) -> None:
+    for m in (modelos or MODELOS_A_CORRER):
+        correr_modelo(m)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Parte 3: rendimiento esperado de los modelos del diseño 2x2.")
+    parser.add_argument("--modelo", type=int, nargs="+", choices=sorted(SALIDAS),
+                        help="Modelo(s) a correr. Sin este argumento se corren los de MODELOS_A_CORRER.")
+    args = parser.parse_args()
+    main(args.modelo)

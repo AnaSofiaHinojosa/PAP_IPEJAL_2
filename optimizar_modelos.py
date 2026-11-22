@@ -1,5 +1,24 @@
-from pathlib import Path
+"""
+Parte 4: backtesting walk-forward y búsqueda en rejilla del mejor modelo, para los
+4 modelos del diseño 2x2.
+
+Uso (desde la raíz del repo):
+    python optimizar_modelos.py                 # corre los modelos de MODELOS_A_CORRER (por defecto, los 4)
+    python optimizar_modelos.py --modelo 3      # solo el modelo 3
+    python optimizar_modelos.py --modelo 1 3    # modelos 1 y 3
+
+Sustituye a optimizar_modelos_sin_restriccion.py, optimizar_modelos_sin_estandarizar.py
+y optimizar_modelos_sin_restriccion_sin_estandarizar.py. Cada modelo escribe en la
+misma carpeta que antes, así que comparar_modelos.py y calibrar_modelos.py no cambian.
+
+Otros scripts importan de aquí cargar_rendimientos, cargar_factores, serie_ic y
+resumir_ic: no cambiar sus nombres ni sus argumentos.
+"""
+
+import argparse
 from itertools import product
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -7,8 +26,11 @@ from estimar_exposiciones import FACTORES_DEFAULT
 from backtesting import backtest_modelo, FRECUENCIA_DEFAULT
 
 REGRESION = Path("salidas/regresion")
-SALIDA = Path("salidas/backtesting")
+SALIDA = Path("salidas/backtesting")   # carpeta del modelo 1
 
+# ---------------------------------------------------------------------------
+# Parámetros comunes a los 4 modelos
+# ---------------------------------------------------------------------------
 FACTORES = FACTORES_DEFAULT
 # None = histórico completo; resto en meses
 VENTANAS_BETA = [None, 36, 60, 120]
@@ -19,11 +41,6 @@ VENTANAS_FACTOR = [3, 6, 12]
 # cada cuántos meses se recalculan los betas
 FRECUENCIA_REESTIMACION = FRECUENCIA_DEFAULT
 REZAGO_FACTOR = 1                       # evita look-ahead en el factor esperado
-# estandarizar factores en cada corte (consistente con la Parte 2)
-ESTANDARIZAR = True
-# estandarizar también el rendimiento en exceso en cada corte
-ESTANDARIZAR_Y = True
-# (z-score global, solo con datos hasta el corte; igual que la Parte 2)
 # mínimo de acciones con dato para calcular IC ese mes
 MIN_ACCIONES_IC = 10
 # meses mínimos de IC para que un modelo entre a la comparación
@@ -34,6 +51,47 @@ MIN_PERIODOS = 24
 # False = solo con los meses en el Top 100 (rendimientos_miembros.csv), como antes.
 # En ambos casos el IC se mide SOLO con las empresas del Top 100 de ese mes.
 ENTRENAR_CON_HISTORIAL = True
+
+# ---------------------------------------------------------------------------
+# Diseño 2x2: qué cambia en cada modelo
+#   restringir_suma: sum(beta) = 1
+#   estandarizar:    z-score de los factores en cada corte (consistente con la Parte 2)
+#   estandarizar_y:  z-score global del rendimiento en exceso en cada corte
+#                    (solo con datos hasta el corte; igual que la Parte 2)
+# ---------------------------------------------------------------------------
+MODELOS = {
+    1: {
+        "nombre": "Modelo 1 (base): factores estandarizados, sum(beta)=1",
+        "restringir_suma": True,
+        "estandarizar": True,
+        "estandarizar_y": True,
+        "salida": SALIDA,
+    },
+    2: {
+        "nombre": "Modelo 2: factores estandarizados, SIN restricción sum(beta)=1",
+        "restringir_suma": False,
+        "estandarizar": True,
+        "estandarizar_y": True,
+        "salida": Path("salidas/backtesting_sin_restriccion"),
+    },
+    3: {
+        "nombre": "Modelo 3: factores SIN estandarizar, sum(beta)=1",
+        "restringir_suma": True,
+        "estandarizar": False,
+        "estandarizar_y": False,
+        "salida": Path("salidas/backtesting_sin_estandarizar"),
+    },
+    4: {
+        "nombre": "Modelo 4: factores SIN estandarizar, SIN restricción sum(beta)=1",
+        "restringir_suma": False,
+        "estandarizar": False,
+        "estandarizar_y": False,
+        "salida": Path("salidas/backtesting_sin_restriccion_sin_estandarizar"),
+    },
+}
+
+# Modelos que se corren con "python optimizar_modelos.py" sin argumentos.
+MODELOS_A_CORRER = [1, 2, 3, 4]
 
 
 def cargar_rendimientos(archivo: Path) -> pd.DataFrame:
@@ -79,9 +137,12 @@ def resumir_ic(serie: pd.Series) -> dict:
     }
 
 
-def main():
-    SALIDA.mkdir(parents=True, exist_ok=True)
+def correr_modelo(modelo: int) -> None:
+    cfg = MODELOS[modelo]
+    salida = cfg["salida"]
+    salida.mkdir(parents=True, exist_ok=True)
 
+    print(f"\n{'=' * 75}\n{cfg['nombre']}\n{'=' * 75}")
     print("Leyendo rendimientos y factores...")
     rendimientos_miembros = cargar_rendimientos(
         REGRESION / "rendimientos_miembros.csv")
@@ -95,8 +156,9 @@ def main():
     else:
         rendimientos = rendimientos_miembros
         print("  Betas e IC solo con meses en el Top 100 (rendimientos_miembros.csv)")
-    print(
-        f"  estandarizar factores = {ESTANDARIZAR}, estandarizar rendimientos = {ESTANDARIZAR_Y}")
+    print(f"  restricción sum(beta)=1 = {cfg['restringir_suma']}, "
+          f"estandarizar factores = {cfg['estandarizar']}, "
+          f"estandarizar rendimientos = {cfg['estandarizar_y']}")
 
     combinaciones = list(product(VENTANAS_BETA, MIN_OBS_GRID, VENTANAS_FACTOR))
     print(f"\nCorriendo {len(combinaciones)} modelos "
@@ -121,9 +183,10 @@ def main():
             frecuencia_meses=FRECUENCIA_REESTIMACION,
             ventana_factor=ventana_factor,
             rezago_factor=REZAGO_FACTOR,
-            estandarizar=ESTANDARIZAR,
+            estandarizar=cfg["estandarizar"],
             min_acciones_ic=MIN_ACCIONES_IC,
-            estandarizar_y=ESTANDARIZAR_Y,     # pasa a estimar_matriz_exposiciones
+            estandarizar_y=cfg["estandarizar_y"],      # pasa a estimar_matriz_exposiciones
+            restringir_suma=cfg["restringir_suma"],
         )
         resultados_por_modelo[modelo_id] = resultado
         parametros[modelo_id] = {
@@ -174,7 +237,7 @@ def main():
         })
     comparacion = pd.DataFrame(filas_resumen)
 
-    # ---- Ranking promedio ---- #
+    # ---- Lugares por métrica (el orden y el ganador se deciden por IC Ratio) ---- #
     comparacion["rank_ic_medio"] = comparacion["ic_medio"].rank(
         ascending=False, method="min")
     comparacion["rank_ic_std"] = comparacion["ic_std"].rank(
@@ -186,17 +249,16 @@ def main():
     comparacion = comparacion.sort_values(
         ["rank_ic_ratio", "ic_ratio"], ascending=[True, False], na_position="last"
     ).reset_index(drop=True)
-    comparacion.to_csv(SALIDA / "comparacion_modelos.csv", index=False)
+    comparacion.to_csv(salida / "comparacion_modelos.csv", index=False)
 
-    # ---- Selección del modelo ganador ----
+    # ---- Selección del modelo ganador: mayor IC Ratio ----
     ganador = comparacion.iloc[0]
     print(f"\n{'=' * 70}")
-    print(f"MODELO GANADOR: {ganador['modelo_id']}")
-    print(
-        f"  Ranking promedio = {ganador['ranking_promedio']:.2f}  <- criterio de selección")
-    print(f"    lugar IC medio = {ganador['rank_ic_medio']:.0f}")
-    print(f"    lugar IC std   = {ganador['rank_ic_std']:.0f}")
-    print(f"    lugar IC Ratio = {ganador['rank_ic_ratio']:.0f}")
+    print(f"MODELO GANADOR (mayor IC Ratio): {ganador['modelo_id']}")
+    print(f"  lugar IC Ratio = {ganador['rank_ic_ratio']:.0f}  <- criterio de selección")
+    print(f"  lugar IC medio = {ganador['rank_ic_medio']:.0f}")
+    print(f"  lugar IC std   = {ganador['rank_ic_std']:.0f}")
+    print(f"  ranking promedio = {ganador['ranking_promedio']:.2f} (informativo)")
     print(f"  IC medio   = {ganador['ic_medio']:.4f}")
     print(f"  IC std     = {ganador['ic_std']:.4f}")
     print(f"  IC Ratio   = {ganador['ic_ratio']:.4f}")
@@ -206,20 +268,22 @@ def main():
     print(f"{'=' * 70}")
 
     resultado_ganador = resultados_por_modelo[ganador["modelo_id"]]
-    resultado_ganador["ic_serie"].to_csv(SALIDA / "mejor_modelo_ic_serie.csv")
+    resultado_ganador["ic_serie"].to_csv(salida / "mejor_modelo_ic_serie.csv")
     resultado_ganador["rendimiento_esperado"].to_csv(
-        SALIDA / "mejor_modelo_rendimiento_esperado.csv")
+        salida / "mejor_modelo_rendimiento_esperado.csv")
 
-    carpeta_exp = SALIDA / "mejor_modelo_exposiciones"
+    carpeta_exp = salida / "mejor_modelo_exposiciones"
     carpeta_exp.mkdir(exist_ok=True)
     for fecha, matriz in resultado_ganador["exposiciones_por_fecha"].items():
         matriz.to_csv(carpeta_exp / f"{fecha:%Y-%m}.csv")
 
     definiciones = pd.DataFrame([
+        ("Modelo", cfg["nombre"]),
         ("ic_medio", "Promedio de la correlación de Spearman mensual entre rendimiento "
                      "esperado (ex ante) y rendimiento real (ex post), en las fechas comunes"),
         ("ic_std", "Desviación estándar del IC mensual (qué tan ruidosa es la señal)"),
-        ("ic_ratio", "ic_medio / ic_std — qué tan consistente es la señal en el tiempo"),
+        ("ic_ratio", "ic_medio / ic_std — qué tan consistente es la señal en el tiempo. "
+                     "Criterio de orden y de selección del ganador (mayor gana)"),
         ("t_stat", "ic_medio / (ic_std / sqrt(n)) — significancia estadística del IC"),
         ("hit_rate", "% de meses con IC > 0"),
         ("n_periodos", "Número de meses (fechas comunes a todos los modelos) usados para el IC"),
@@ -231,7 +295,7 @@ def main():
         ("rank_ic_std", "Lugar por IC std (1 = menor)"),
         ("rank_ic_ratio", "Lugar por IC Ratio (1 = mayor)"),
         ("ranking_promedio",
-         "Promedio de los tres lugares — criterio de selección (menor gana)"),
+         "Promedio de los tres lugares; informativo (no decide el ganador)"),
         ("ventana_beta_meses", "'completo' = histórico completo (expanding); si es un "
                                "número, meses de ventana móvil usados para reestimar betas"),
         ("min_obs", "Mínimo de meses exigidos para estimar el beta de una acción"),
@@ -239,12 +303,22 @@ def main():
          "Ventana del rolling mean usado para el factor esperado (Parte 3)"),
     ], columns=["concepto", "definición"])
 
-    with pd.ExcelWriter(SALIDA / "comparacion_modelos.xlsx", engine="openpyxl") as xw:
+    with pd.ExcelWriter(salida / "comparacion_modelos.xlsx", engine="openpyxl") as xw:
         comparacion.to_excel(xw, sheet_name="Comparacion", index=False)
         definiciones.to_excel(xw, sheet_name="Definiciones", index=False)
 
-    print(f"\nResultados completos en {SALIDA}")
+    print(f"\nResultados completos (modelo {modelo}) en {salida}")
+
+
+def main(modelos: list[int] | None = None) -> None:
+    for m in (modelos or MODELOS_A_CORRER):
+        correr_modelo(m)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Parte 4: backtesting y rejilla de los modelos del diseño 2x2.")
+    parser.add_argument("--modelo", type=int, nargs="+", choices=sorted(MODELOS),
+                        help="Modelo(s) a correr. Sin este argumento se corren los de MODELOS_A_CORRER.")
+    args = parser.parse_args()
+    main(args.modelo)
